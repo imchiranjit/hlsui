@@ -1,0 +1,236 @@
+.hlsjs-container {
+  position: relative;
+}
+.hlsjs-container > .hlsjs-controls {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+.hlsjs-video {
+  width: 100%;
+  height: 100%;
+}
+.hlsjs-controls > *{
+  opacity: 0;
+  transition: .2s;
+  z-index: 0;
+}
+.hlsjs-controls[shown] > *{
+  opacity: 1;
+  z-index: 1;
+}
+
+.hlsjs-controls[shown] > .hlsjs-backface {
+  z-index: 0;
+}
+
+.hlsjs-controls > .hlsjs-backface {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: rgb(0 0 0 / 33%);
+  z-index: 1;
+}
+
+.hlsjs-controls > .hlsjs-topbar, .hlsjs-toolbar {
+  position: absolute;
+  width: 100%;
+  padding: .4em;
+}
+.hlsjs-topbar {
+  top: 0;
+  display: inline-flex;
+}
+.hlsjs-toolbar {
+  bottom: 0;
+}
+
+.hlsjs-title, .hlsjs-live-tag {
+  color: #fff;
+  font-family: sans-serif;
+  font-size: 1em;
+}
+
+.hlsjs-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+}
+.hlsjs-live-tag {
+  font-size: .6em;
+  background: #00b500;
+  padding: .3em .4em;
+  vertical-align: middle;
+  border-radius: 1em;
+  font-weight: 100;
+  border: none;
+  outline: none;
+  cursor: pointer;
+}
+.hlsjs-live-tag:not([live]) {
+  background: #b50000;
+}
+
+.hlsjs-controls > .hlsjs-big-play-btn {
+  position: absolute;
+  margin: auto;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 64px;
+  height: 64px;
+  border: none;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 75%);
+  outline: none;
+  overflow: hidden;
+  font-size: 48px;
+  vertical-align: middle;
+  text-align: center;
+  padding-left: .15em;
+  cursor: pointer;
+}
+
+.hlsjs-loader {
+  z-index: 0 !important;
+  opacity: 0 !important;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 80px;
+  height: 80px;
+  position: absolute;
+  transition: .1s;
+}
+.hlsjs-loader[shown] {
+  opacity: 1 !important;
+}
+.loader {
+  width: 100%;
+  height: 100%;
+  border: 4px solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 4px solid #3498db;
+  -webkit-animation: spin 1.5s linear infinite; /* Safari */
+  animation: spin 1.5s linear infinite;
+}
+
+/* Safari */
+@-webkit-keyframes spin {
+  0% { -webkit-transform: rotate(0deg); }
+  100% { -webkit-transform: rotate(360deg); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.hlsjs-ctrl-btn {
+  border: none;
+  height: 24px;
+  width: 24px;
+  margin: 0 .2em;
+  padding: 0;
+  outline: none;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 0%);
+  color: #fff;
+  cursor: pointer;
+}
+.hlsjs-ctrl-btn.btn-lt {
+  float: left;
+}
+.hlsjs-ctrl-btn.btn-rt {
+  float: right;
+}
+
+.hlsjs-dropdown {
+  position: absolute;
+  max-width: 180px;
+  max-height: 240px;
+  background: #fff;
+  bottom: 42px;
+  right: -280px;
+  margin-right: 12px;
+  height: auto;
+  width: auto;
+  border-radius: 10px;
+  box-shadow: 0.1em 0.1em 0.3em rgb(0 0 0 / 20%);
+  overflow: auto;
+  padding: .4em 0;
+  transition: .3s;
+}
+.hlsjs-dropdown[shown] {
+  right: 0;
+}
+
+.hlsjs-dropdown-item, .hlsjs-select-option {
+  display: block;
+  width: 100%;
+  height: auto;
+  padding: 2px 10px;
+  position: relative;
+  clear: both;
+  cursor: pointer;
+  overflow: auto;
+}
+
+.hlsjs-dropdown-item:hover, .hlsjs-select-option:hover {
+  background: #e6e6e6;
+}
+
+.hlsjs-dropdown-item-data, .hlsjs-select-option-name, .hlsjs-select-option-selected {
+  font-size: 1em;
+  font-family: sans-serif;
+  height: 100%;
+  line-height: 24px;
+  vertical-align: middle;
+}
+
+.hlsjs-dropdown-item-data.it-nm, .hlsjs-select-option-name {
+  float: left;
+  color: #555;
+  margin-right: 1em;
+}
+
+.hlsjs-dropdown-item-data.it-val, .hlsjs-select-option-selected {
+  float: right;
+  font-size: .8em;
+  color: #777;
+}
+
+.hlsjs-select {
+  position: relative;
+  bottom: 0;
+  box-shadow: none;
+  background: transparent;
+  border-radius: 0;
+  height: auto;
+  width: auto;
+  overflow: auto;
+}
+
+.hlsjs-select-option[selected] {
+  background: #c6c6c6;
+}
+.hlsjs-select-option[selected] > .hlsjs-select-option-name {
+  color: #000;
+  font-weight: 800;
+}
+.hlsjs-select-option[selected] > .hlsjs-select-option-selected {
+  width: 10px;
+  height: 10px;
+  background: #00b500;
+  margin: 5px;
+  border-radius: 50%;
+}
+
+[hide] {
+  display: none;
+}
