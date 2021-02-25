@@ -23,11 +23,6 @@ class HlsUI extends Hls {
 
   controlsTimeout = null;
 
-
-  constructor() {
-    super();
-  }
-
   attachMedia(videoElement, title="") {
     this.initUI(videoElement, title);
     super.attachMedia(videoElement);
@@ -38,10 +33,10 @@ class HlsUI extends Hls {
     //videoElement = document.querySelector(id);
 		videoElement.controls = false;
 		var videoContainer = document.createElement("div");
-    var containerClass = "hlsjs-container";
+    videoContainer.setAttribute("class", "hlsjs-container");
 
     if(videoElement.hasAttribute("class")) {
-      containerClass += " "+videoElement.getAttribute("class");
+      this.addClass(videoContainer, videoElement.getAttribute("class"));
       videoElement.removeAttribute("class");
     }
     if(videoElement.hasAttribute("id")) {
@@ -49,8 +44,7 @@ class HlsUI extends Hls {
       videoElement.removeAttribute("id");
     }
 
-    videoElement.setAttribute("class", "hlsjs-video")
-    videoContainer.setAttribute("class", containerClass);
+    videoElement.setAttribute("class", "hlsjs-video");
 
 		videoElement.parentNode.insertBefore(videoContainer, videoElement);
 		videoContainer.appendChild(videoElement);
@@ -71,6 +65,7 @@ class HlsUI extends Hls {
 
 		var videoLiveTag = document.createElement("button");
 		videoLiveTag.setAttribute("class", "hlsjs-live-tag");
+    videoLiveTag.setAttribute("live", "true");
 		videoLiveTag.innerHTML = "LIVE";
 
 		videoTopBar.appendChild(videoTitle);
@@ -114,9 +109,6 @@ class HlsUI extends Hls {
 
 		var videoBigPlayBtn = document.createElement("button");
 		videoBigPlayBtn.setAttribute("class", "hlsjs-big-play-btn material-icons-round");
-    if(!this.isMobOrTab()) {
-      videoBigPlayBtn.setAttribute("hide", "true");
-    }
 		videoBigPlayBtn.innerHTML = "play_arrow";
 
     var videoLoader = document.createElement("div");
@@ -132,6 +124,13 @@ class HlsUI extends Hls {
 		videoControls.appendChild(videoToolbar);
 
 		videoContainer.appendChild(videoControls);
+
+    if(this.isMobOrTab()) {
+      videoPlayPauseBtn.setAttribute("hide", "true");
+      this.addClass(videoContainer, "hlsjs-mob");
+    } else {
+      videoBigPlayBtn.setAttribute("hide", "true");
+    }
 
     this.controls.backface = videoBackFace;
     this.controls.title = videoTitle;
@@ -194,11 +193,29 @@ class HlsUI extends Hls {
     var _this = this;
 
     //console.log(this.constructor.Events);
-
     this.on(this.constructor.Events.ERROR, (event, { details }) => {
       //console.log(details);
       if (details === _this.constructor.ErrorDetails.BUFFER_STALLED_ERROR) {
         _this.showLoader();
+      }
+    });
+    this.on(this.constructor.Events.ERROR, function (event, data) {
+      if (data.fatal) {
+        switch (data.type) {
+          case _this.constructor.ErrorTypes.NETWORK_ERROR:
+            // try to recover network error
+            console.log('fatal network error encountered, try to recover');
+            _this.startLoad();
+            break;
+          case _this.constructor.ErrorTypes.MEDIA_ERROR:
+            console.log('fatal media error encountered, try to recover');
+            _this.recoverMediaError();
+            break;
+          default:
+            // cannot recover
+            _this.destroy();
+            break;
+        }
       }
     });
     this.on(this.constructor.Events.FRAG_BUFFERED, () => {
@@ -225,6 +242,7 @@ class HlsUI extends Hls {
         _this.hideControls();
         _this.controls.bgPlay.innerHTML = "pause_arrow";
         _this.controls.play.innerHTML = "pause_arrow";
+        _this.hideLoader();
       };
 
       _this.media.onpause = function() {
@@ -239,19 +257,39 @@ class HlsUI extends Hls {
       };
 
       _this.controls.backface.onclick = function() {
-        _this.hideDropdown();
-        _this.showControls();
-        _this.hideControls();
+        //console.log("backface_clicked");
+        _this.backfaceClicked();
+      };
+
+      _this.controls.controlsContainer.onmousemove = function() {
+        if(!_this.isDropdownShown()) {
+          _this.backfaceClicked();
+        }
       };
 
       _this.controls.fullscreen.onclick = function() {
         _this.controls.fullscreen.innerHTML = (_this.toggleFullscreen() ? "fullscreen" : "fullscreen_exit");
       };
 
+      window.addEventListener("offline", function () {
+        //console.log("offline");
+        _this.stopLoad();
+      }, false);
+      window.addEventListener("online", function () {
+        //console.log("online");
+        _this.startLoad();
+      }, false);
+
     });
     this.on(this.constructor.Events.MANIFEST_PARSED, function (event, data) {
       _this.initQualityMenu();
     });
+  }
+
+  backfaceClicked() {
+    this.hideDropdown();
+    this.showControls();
+    this.hideControls();
   }
 
   bindDropdownItemsControls() {
@@ -367,6 +405,7 @@ class HlsUI extends Hls {
 
   hideDropdown() {
     this.controls.dropdown.removeAttribute("shown");
+    this.controls.controlsContainer.removeAttribute("dropdown");
     //this.refreshDropdown();
     this.hideControls();
   }
@@ -375,6 +414,7 @@ class HlsUI extends Hls {
     clearTimeout(this.controlsTimeout);
     this.refreshDropdown();
     this.controls.dropdown.setAttribute("shown", "true");
+    this.controls.controlsContainer.setAttribute("dropdown", "true");
   }
 
   showItems(tp) {
@@ -556,6 +596,18 @@ class HlsUI extends Hls {
     var check = false;
     (function(a){if(/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino|android|ipad|playbook|silk/i.test(a)||/1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i.test(a.substr(0,4))) check = true;})(navigator.userAgent||navigator.vendor||window.opera);
     return check;
+  }
+
+  //add class to element
+  addClass(element, name) {
+  	var arr = element.className.split(" ");
+  	if(arr.indexOf(name) == -1) {
+  		element.className += " " + name;
+  	}
+  }
+  //remove class from element
+  removeClass(element, name) {
+  	element.className = element.className.replace(new RegExp('\\b' + name + '\\b', "gm"), "").trim();
   }
 
 
