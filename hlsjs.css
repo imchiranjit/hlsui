@@ -134,11 +134,16 @@
   100% { transform: rotate(360deg); }
 }
 
+.hlsjs-toolbar-controls {
+  overflow: auto;
+  vertical-align: middle;
+}
+
 .hlsjs-ctrl-btn {
   border: none;
   height: 24px;
   width: 24px;
-  margin: 0 .2em;
+  margin: .225em;
   padding: 0;
   outline: none;
   border-radius: 50%;
@@ -254,4 +259,124 @@
 
 [hide] {
   display: none;
+}
+
+
+/////////////////
+.hlsjs-slider-container {
+  width: 100%;
+}
+
+.hlsjs-slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 5px;
+  background: #d3d3d3;
+  outline: none;
+  opacity: 0.7;
+  -webkit-transition: .2s;
+  transition: opacity .2s;
+}
+
+.hlsjs-slider:hover {
+  opacity: 1;
+}
+
+.hlsjs-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #4CAF50;
+  cursor: pointer;
+}
+
+.hlsjs-slider::-moz-range-thumb {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #4CAF50;
+  cursor: pointer;
+}
+
+.hlsjs-slider::-webkit-slider-runnable-track {
+  color: #13bba4;
+}
+
+/** FF*/
+.hlsjs-slider::-moz-range-progress {
+  background-color: #43e5f7;
+}
+.hlsjs-slider::-moz-range-track {
+  background-color: #9a905d;
+}
+/* IE*/
+.hlsjs-slider::-ms-fill-lower {
+  background-color: #43e5f7;
+}
+.hlsjs-slider::-ms-fill-upper {
+  background-color: #9a905d;
+}
+
+.hlsjs-volume-container {
+  float: right;
+  margin: 0 .2em;
+}
+.hlsjs-volume-container:hover {
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 20px;
+}
+
+.hlsjs-volume {
+  float: left;
+  width: 100px;
+  margin: 14px;
+  transition: .2s;
+  margin-right: 5px;
+}
+
+.hlsjs-volume-container:not(:hover) .hlsjs-volume {
+  width: 0;
+  margin-right: 0;
+  margin-left: 0;
+  overflow: hidden;
+}
+
+.hlsjs-container.hlsjs-mob .hlsjs-volume {
+  display: none;
+}
+
+.hlsjs-container.hlsjs-mob .hlsjs-volume-container {
+  margin: 0;
+}
+
+.hlsjs-container.hlsjs-mob .hlsjs-volume-container:hover {
+  background: transparent;
+  border-radius: 0;
+}
+
+
+
+
+
+
+
+.hlsjs-time-container {
+  float: left;
+  color: #fff;
+  height: 100%;
+  overflow: auto;
+  padding: .48em;
+  vertical-align: middle;
+}
+
+
+.hlsjs-seek-container {
+  vertical-align: middle;
+}
+
+.hlsjs-seek {
+  width: 100%;
 }

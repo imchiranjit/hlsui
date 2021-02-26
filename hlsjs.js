@@ -4,6 +4,11 @@ class HlsUI extends Hls {
     loader: null,
     bgPlay: null,
     play : null,
+    currentTime: null,
+    duration: null,
+    seek: null,
+    timeContainer: null,
+    seekContainer: null,
     mute: null,
     fullscreen: null,
     more: null,
@@ -11,6 +16,7 @@ class HlsUI extends Hls {
     liveTag: null,
     backface: null,
     dropdown: null,
+    volume: null,
     dropdownItem: {
       resolution: null,
       speed: null,
@@ -65,8 +71,8 @@ class HlsUI extends Hls {
 
 		var videoLiveTag = document.createElement("button");
 		videoLiveTag.setAttribute("class", "hlsjs-live-tag");
-    videoLiveTag.setAttribute("live", "true");
-		videoLiveTag.innerHTML = "LIVE";
+    videoLiveTag.setAttribute("hide", "true");
+		videoLiveTag.removeAttribute("live");
 
 		videoTopBar.appendChild(videoTitle);
 		videoTopBar.appendChild(videoLiveTag);
@@ -74,13 +80,49 @@ class HlsUI extends Hls {
 		var videoToolbar = document.createElement("div");
 		videoToolbar.setAttribute("class", "hlsjs-toolbar");
 
+    var videoToolbarControls = document.createElement("div");
+		videoToolbarControls.setAttribute("class", "hlsjs-toolbar-controls");
+
 		var videoPlayPauseBtn = document.createElement("button");
 		videoPlayPauseBtn.setAttribute("class", "hlsjs-ctrl-btn btn-lt btn-lt material-icons-round");
 		videoPlayPauseBtn.innerHTML = "play_arrow";
 
+    // current time and duration
+    var videoTimeContainer =  document.createElement("div");
+		videoTimeContainer.setAttribute("class", "hlsjs-time-container");
+    videoTimeContainer.setAttribute("hide", "true");
+
+    var videoCurrentTime =  document.createElement("span");
+		videoCurrentTime.setAttribute("class", "hlsjs-current-time");
+    videoCurrentTime.innerHTML = this.parseTime(0);
+
+    var videoDuration =  document.createElement("span");
+		videoDuration.setAttribute("class", "hlsjs-duration");
+    videoDuration.innerHTML = this.parseTime(0);
+
+    videoTimeContainer.appendChild(videoCurrentTime);
+    videoTimeContainer.appendChild(document.createTextNode(" / "));
+    videoTimeContainer.appendChild(videoDuration);
+    //
+
+    var videoVolumeContainer = document.createElement("span");
+		videoVolumeContainer.setAttribute("class", "hlsjs-volume-container");
+
+    var videoVolumeSlider = document.createElement("input");
+		videoVolumeSlider.setAttribute("class", "hlsjs-slider hlsjs-volume");
+    videoVolumeSlider.setAttribute("autocomplete", "false");
+    videoVolumeSlider.setAttribute("type", "range");
+    videoVolumeSlider.setAttribute("min", "0");
+    videoVolumeSlider.setAttribute("max", "1");
+    videoVolumeSlider.setAttribute("step", "0.05");
+    videoVolumeSlider.setAttribute("value", "1");
+
 		var videoVolumeBtn = document.createElement("button");
 		videoVolumeBtn.setAttribute("class", "hlsjs-ctrl-btn btn-rt btn-lt material-icons-round");
 		videoVolumeBtn.innerHTML = "volume_up";
+
+    videoVolumeContainer.appendChild(videoVolumeSlider);
+    videoVolumeContainer.appendChild(videoVolumeBtn);
 
 		var videoMoreBtn = document.createElement("button");
 		videoMoreBtn.setAttribute("class", "hlsjs-ctrl-btn btn-rt btn-lt material-icons-round");
@@ -101,11 +143,30 @@ class HlsUI extends Hls {
     videoDropdown.appendChild(videoSpeed);
     videoDropdown.appendChild(videoCaption);
 
-		videoToolbar.appendChild(videoPlayPauseBtn);
-		videoToolbar.appendChild(videoFSBtn);
-		videoToolbar.appendChild(videoMoreBtn);
-		videoToolbar.appendChild(videoVolumeBtn);
-    videoToolbar.appendChild(videoDropdown);
+    videoToolbarControls.appendChild(videoPlayPauseBtn);
+    videoToolbarControls.appendChild(videoTimeContainer);
+		videoToolbarControls.appendChild(videoFSBtn);
+		videoToolbarControls.appendChild(videoMoreBtn);
+		videoToolbarControls.appendChild(videoVolumeContainer);
+    videoToolbarControls.appendChild(videoDropdown);
+
+    var videoSeekContainer = document.createElement("div");
+		videoSeekContainer.setAttribute("class", "hlsjs-seek-container");
+    videoSeekContainer.setAttribute("hide", "true");
+
+    var videoSeekSlider = document.createElement("input");
+		videoSeekSlider.setAttribute("class", "hlsjs-slider hlsjs-seek");
+    videoSeekSlider.setAttribute("autocomplete", "false");
+    videoSeekSlider.setAttribute("type", "range");
+    videoSeekSlider.setAttribute("min", "0");
+    videoSeekSlider.setAttribute("max", "100");
+    videoSeekSlider.setAttribute("step", "0.0001");
+    videoSeekSlider.setAttribute("value", "0");
+
+    videoSeekContainer.appendChild(videoSeekSlider);
+
+    videoToolbar.appendChild(videoToolbarControls);
+    videoToolbar.appendChild(videoSeekContainer);
 
 		var videoBigPlayBtn = document.createElement("button");
 		videoBigPlayBtn.setAttribute("class", "hlsjs-big-play-btn material-icons-round");
@@ -137,13 +198,19 @@ class HlsUI extends Hls {
     this.controls.liveTag = videoLiveTag;
     this.controls.bgPlay = videoBigPlayBtn;
     this.controls.play = videoPlayPauseBtn;
+    this.controls.currentTime = videoCurrentTime;
+    this.controls.duration = videoDuration;
     this.controls.mute = videoVolumeBtn;
     this.controls.fullscreen = videoFSBtn;
     this.controls.more = videoMoreBtn;
+    this.controls.volume = videoVolumeSlider;
+    this.controls.seek = videoSeekSlider;
     this.controls.loader = videoLoader;
     this.controls.dropdown = videoDropdown;
     this.controls.controlsContainer = videoControls;
     this.controls.videoContainer = videoContainer;
+    this.controls.timeContainer = videoTimeContainer;
+    this.controls.seekContainer = videoSeekContainer;
 
     this.bindControls();
 
@@ -178,7 +245,7 @@ class HlsUI extends Hls {
     var _this = this;
     this.controls.dropdownItem.qualityMenu = this.createSelectElement("res");
 		this.getVideoQualities().forEach((item, i) => {
-				this.controls.dropdownItem.qualityMenu.appendChild(this.createSelectOptionElement(item.name, item.level, (item.level == -1)));
+				this.controls.dropdownItem.qualityMenu.appendChild(this.createSelectOptionElement(item.name, item.level, (item.level == _this.manualLevel)));
 		});
 		this.controls.dropdownItem.qualityMenu.onchange = function (e) {
         var value = this.getAttribute("value");
@@ -223,17 +290,22 @@ class HlsUI extends Hls {
       _this.hideLoader();
     });
 
+    this.once(this.constructor.Events.LEVEL_LOADED, function(e, d) {
+      console.log(_this.isLive());
+      _this.setupStream();
+    });
+
     this.on(this.constructor.Events.MEDIA_ATTACHED, function () {
 
       _this.showLoader();
-
-      if(_this.isMobOrTab()) {
-        _this.media.volume = 1.0;
-      }
+      _this.media.volume = 1.0;
 
       _this.controls.play.onclick = function() {_this.togglePlay()};
       _this.controls.bgPlay.onclick = function() {_this.togglePlay()};
       _this.controls.mute.onclick = function() {_this.toggleMute()};
+      _this.controls.volume.oninput = function() {
+        _this.changeVolume();
+      }
 
       _this.controls.more.onclick = function() {_this.toggleDropdown()};
       _this.bindDropdownItemsControls();
@@ -250,7 +322,17 @@ class HlsUI extends Hls {
         _this.controls.bgPlay.innerHTML = "play_arrow";
         _this.controls.play.innerHTML = "play_arrow";
       };
+
+      _this.media.ontimeupdate = (event) => {
+        _this.updateSeekBar();
+      };
+
+      _this.controls.seek.oninput = function() {
+        _this.updateSeek();
+      }
+
       _this.media.ondurationchange = (event) => {
+        _this.controls.duration.innerHTML = _this.duration();
         if((_this.media.duration - _this.media.currentTime) > 30) {
           _this.notLive();
         }
@@ -273,10 +355,12 @@ class HlsUI extends Hls {
 
       window.addEventListener("offline", function () {
         //console.log("offline");
-        _this.stopLoad();
+        //_this.showLoader();
+        //_this.stopLoad();
       }, false);
       window.addEventListener("online", function () {
         //console.log("online");
+        //_this.hideLoader();
         _this.startLoad();
       }, false);
 
@@ -333,10 +417,16 @@ class HlsUI extends Hls {
   }
 
   getCurrentQuality() {
-    return {"name": this.getQualityName(this.manualLevel), "level": this.manualLevel};
+    return {
+      "name": this.getQualityName(this.manualLevel) +
+              (this.manualLevel==-1? "("+this.getQualityName(this.currentLevel)+")":""),
+      "level": this.manualLevel};
   }
 
   notLive() {
+    if(!this.isLive()) {
+      return;
+    }
     this.liveTagActive();
   }
 
@@ -350,6 +440,7 @@ class HlsUI extends Hls {
     var _this = this;
     this.controls.liveTag.onclick = function() {
       //console.log("clicked");
+      _this.showLoader();
       _this.goToLive();
       _this.play();
     }
@@ -359,6 +450,75 @@ class HlsUI extends Hls {
   liveTagInactive() {
     this.controls.liveTag.onclick = null;
     this.controls.liveTag.setAttribute("live", "true");
+  }
+
+  isLive() {
+    var cl = this.currentLevel;
+    if(cl == -1) {
+      cl = 0;
+    }
+    return this.levels[cl]['details']['live'];
+  }
+
+  setupStream() {
+    this.controls.liveTag.removeAttribute("hide");
+    if(this.isLive()) {
+      this.controls.liveTag.innerHTML = "LIVE";
+      this.controls.timeContainer.setAttribute("hide", true);
+      this.controls.seekContainer.setAttribute("hide", true);
+    } else {
+      this.controls.liveTag.innerHTML = "VOD";
+      this.controls.liveTag.removeAttribute("live");
+      this.controls.liveTag.onclick = null;
+      this.controls.timeContainer.removeAttribute("hide");
+      this.controls.seekContainer.removeAttribute("hide");
+    }
+  }
+
+  changeVolume() {
+    var vol = parseFloat(this.controls.volume.value);
+    this.media.volume = vol;
+    if(vol == 0) {
+      this.mute();
+    } else {
+      this.unmute();
+    }
+  }
+
+  updateSeekBar() {
+    this.controls.currentTime.innerHTML = this.currentTime();
+    this.controls.seek.value = parseFloat((this.media.currentTime / this.media.duration)*parseFloat(this.controls.seek.max));
+  }
+
+  updateSeek() {
+    this.seek(parseFloat((parseFloat(this.controls.seek.value) / parseFloat(this.controls.seek.max))*this.media.duration));
+  }
+
+  seek(sec) {
+    this.media.currentTime = sec;
+  }
+
+  currentTime() {
+    return this.parseTime(this.media.currentTime);
+  }
+
+  duration() {
+    return this.parseTime(this.media.duration);
+  }
+
+  parseTime(seconds=0) {
+    if (seconds > 0) {
+      var m = Math.floor(seconds / 60);
+      var h = Math.floor(m / 60);
+      m = m % 60;
+      var s = Math.floor(seconds % 60);
+      h = (h >= 10) ? h : "0" + h;
+      m = (m >= 10) ? m : "0" + m;
+      s = (s >= 10) ? s : "0" + s;
+      return h+":"+m+":"+s;
+    }
+
+    return "00:00:00";
   }
 
   play() {
@@ -375,19 +535,19 @@ class HlsUI extends Hls {
 
   mute() {
     this.media.muted = true;
+    this.controls.mute.innerHTML = "volume_off";
   }
 
   unmute() {
     this.media.muted = false;
+    this.controls.mute.innerHTML = "volume_up";
   }
 
   toggleMute() {
     if(this.media.muted) {
       this.unmute();
-      this.controls.mute.innerHTML = "volume_up";
     } else {
       this.mute();
-      this.controls.mute.innerHTML = "volume_off";
     }
   }
 
@@ -532,7 +692,7 @@ class HlsUI extends Hls {
          return;
        }
        while(target != document.body) {
-           if(target.classList.contains("hlsjs-select-option")) {
+           if(_this.hasClass(target, "hlsjs-select-option")) {
               var value = target.getAttribute("value");
                this.setAttribute("value", value);
                _this.triggerEvent(this, "change");
@@ -608,6 +768,12 @@ class HlsUI extends Hls {
   //remove class from element
   removeClass(element, name) {
   	element.className = element.className.replace(new RegExp('\\b' + name + '\\b', "gm"), "").trim();
+  }
+
+  //has class
+  hasClass(element, name) {
+  	var arr = element.className.split(" ");
+  	return (arr.indexOf(name) != -1);
   }
 
 
