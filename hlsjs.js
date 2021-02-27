@@ -291,9 +291,11 @@ class HlsUI extends Hls {
     });
 
     this.once(this.constructor.Events.LEVEL_LOADED, function(e, d) {
-      console.log(_this.isLive());
+      //console.log(_this.isLive());
       _this.setupStream();
     });
+
+    this.initSlider();
 
     this.on(this.constructor.Events.MEDIA_ATTACHED, function () {
 
@@ -329,6 +331,15 @@ class HlsUI extends Hls {
 
       _this.controls.seek.oninput = function() {
         _this.updateSeek();
+        _this.hideDropdown();
+        _this.showControls();
+      }
+
+      _this.controls.seek.onchange = function() {
+        //_this.updateSeek();
+        _this.hideDropdown();
+        _this.hideControls();
+        _this.showLoader();
       }
 
       _this.media.ondurationchange = (event) => {
@@ -423,6 +434,26 @@ class HlsUI extends Hls {
       "level": this.manualLevel};
   }
 
+  initSlider() {
+    var _this = this;
+    var sliders = document.querySelectorAll(".hlsjs-slider");
+    for(var i = 0; i < sliders.length; i++) {
+      var slider = sliders.item(i);
+      this.updateSliderBackground(slider);
+      slider.addEventListener("input", function(){
+        _this.updateSliderBackground(this);
+      });
+      slider.addEventListener("change", function(){
+        _this.updateSliderBackground(this);
+      });
+    }
+  }
+
+  updateSliderBackground(el) {
+    var value = (el.value-el.min)/(el.max-el.min)*100;
+    el.style.setProperty('--value', value + "%");
+  }
+
   notLive() {
     if(!this.isLive()) {
       return;
@@ -488,6 +519,7 @@ class HlsUI extends Hls {
   updateSeekBar() {
     this.controls.currentTime.innerHTML = this.currentTime();
     this.controls.seek.value = parseFloat((this.media.currentTime / this.media.duration)*parseFloat(this.controls.seek.max));
+    this.updateSliderBackground(this.controls.seek);
   }
 
   updateSeek() {

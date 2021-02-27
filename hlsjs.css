@@ -1,3 +1,7 @@
+:root {
+  --value: 50%;
+}
+
 .hlsjs-container {
   position: relative;
 }
@@ -273,14 +277,8 @@
   height: 6px;
   border-radius: 5px;
   background: #d3d3d3;
+  background: linear-gradient(to right, #2196f3 0%, #2196f3 var(--value), #ccc var(--value), #ccc 100%);
   outline: none;
-  opacity: 0.7;
-  -webkit-transition: .2s;
-  transition: opacity .2s;
-}
-
-.hlsjs-slider:hover {
-  opacity: 1;
 }
 
 .hlsjs-slider::-webkit-slider-thumb {
@@ -289,7 +287,7 @@
   width: 15px;
   height: 15px;
   border-radius: 50%;
-  background: #4CAF50;
+  background: #fff;
   cursor: pointer;
 }
 
@@ -297,27 +295,27 @@
   width: 15px;
   height: 15px;
   border-radius: 50%;
-  background: #4CAF50;
+  background: #fff;
   cursor: pointer;
 }
 
 .hlsjs-slider::-webkit-slider-runnable-track {
-  color: #13bba4;
+  color: #2196f3;
 }
 
 /** FF*/
 .hlsjs-slider::-moz-range-progress {
-  background-color: #43e5f7;
+  background-color: #2196f3;
 }
 .hlsjs-slider::-moz-range-track {
-  background-color: #9a905d;
+  background-color: #ccc;
 }
 /* IE*/
 .hlsjs-slider::-ms-fill-lower {
-  background-color: #43e5f7;
+  background-color: #2196f3;
 }
 .hlsjs-slider::-ms-fill-upper {
-  background-color: #9a905d;
+  background-color: #ccc;
 }
 
 .hlsjs-volume-container {
