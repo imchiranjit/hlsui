@@ -139,8 +139,8 @@
 }
 
 .hlsjs-toolbar-controls {
-  overflow: auto;
   vertical-align: middle;
+  position: relative;
 }
 
 .hlsjs-ctrl-btn {
@@ -167,7 +167,7 @@
   max-width: 180px;
   max-height: 240px;
   background: #fff;
-  bottom: 42px;
+  bottom: 5px;
   right: 0;
   margin-right: 12px;
   height: auto;
@@ -262,6 +262,12 @@
 }
 
 [hide] {
+  display: none;
+}
+
+.hlsjs-controls.hlsjs-live .hlsjs-seek-container,
+.hlsjs-controls.hlsjs-live .hlsjs-time-container,
+.hlsjs-controls.hlsjs-live .hlsjs-speed {
   display: none;
 }
 

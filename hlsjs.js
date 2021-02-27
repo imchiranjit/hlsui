@@ -27,11 +27,27 @@ class HlsUI extends Hls {
     videoContainer: null
   };
 
+  videoConfig = {
+    title: "",
+    live: null
+  }
+
   controlsTimeout = null;
 
-  attachMedia(videoElement, title="") {
-    this.initUI(videoElement, title);
+  attachMedia(videoElement) {
+    this.initUI(videoElement);
     super.attachMedia(videoElement);
+  }
+
+  setConfig(options=null) {
+    if(options != null) {
+      if(options.title) {
+        this.videoConfig.title = options.title;
+      }
+      if(options.live) {
+        this.videoConfig.live = options.live;
+      }
+    }
   }
 
   initUI(videoElement, title) {
@@ -67,7 +83,7 @@ class HlsUI extends Hls {
 
 		var videoTitle = document.createElement("span");
 		videoTitle.setAttribute("class", "hlsjs-title");
-		videoTitle.innerHTML = title;
+		videoTitle.innerHTML = this.videoConfig.title;
 
 		var videoLiveTag = document.createElement("button");
 		videoLiveTag.setAttribute("class", "hlsjs-live-tag");
@@ -136,7 +152,7 @@ class HlsUI extends Hls {
 		videoDropdown.setAttribute("class", "hlsjs-dropdown");
 
     var videoResolution = this.createDropdownItem("Resolution", "Auto", "res", null);
-    var videoSpeed = this.createDropdownItem("Speed", "Normal", "sp", null);
+    var videoSpeed = this.createDropdownItem("Speed", "Normal", "sp", null, "hlsjs-speed");
     var videoCaption = this.createDropdownItem("Caption", "None", "cp", null);
 
     videoDropdown.appendChild(videoResolution);
@@ -216,9 +232,16 @@ class HlsUI extends Hls {
 
   }
 
-  createDropdownItem(nm, val, tp, cat) {
+  createDropdownItem(nm, val, tp, cat, cls=null) {
     var item = document.createElement("div");
-    item.setAttribute("class", "hlsjs-dropdown-item");
+    if(cls != null) {
+      cls = " " + cls;
+    } else {
+      cls="";
+    }
+
+    item.setAttribute("class", "hlsjs-dropdown-item"+cls);
+
     if(tp) {
       item.setAttribute("tp", tp);
     } else {
@@ -484,26 +507,34 @@ class HlsUI extends Hls {
   }
 
   isLive() {
-    var cl = this.currentLevel;
-    if(cl == -1) {
-      cl = 0;
+    if(this.videoConfig.live != null) {
+      return this.videoConfig.live;
     }
-    return this.levels[cl]['details']['live'];
+    try {
+      var cl = this.currentLevel;
+      if(cl == -1) {
+        cl = 0;
+      }
+      return this.levels[cl]['details']['live'];
+    } catch(err) {
+      return false;
+    }
   }
 
   setupStream() {
-    this.controls.liveTag.removeAttribute("hide");
     if(this.isLive()) {
       this.controls.liveTag.innerHTML = "LIVE";
-      this.controls.timeContainer.setAttribute("hide", true);
-      this.controls.seekContainer.setAttribute("hide", true);
+      this.controls.liveTag.setAttribute("live", true);
+      this.addClass(this.controls.controlsContainer, "hlsjs-live");
     } else {
       this.controls.liveTag.innerHTML = "VOD";
       this.controls.liveTag.removeAttribute("live");
       this.controls.liveTag.onclick = null;
-      this.controls.timeContainer.removeAttribute("hide");
-      this.controls.seekContainer.removeAttribute("hide");
+      this.removeClass(this.controls.controlsContainer, "hlsjs-live");
     }
+    this.controls.liveTag.removeAttribute("hide");
+    this.controls.timeContainer.removeAttribute("hide");
+    this.controls.seekContainer.removeAttribute("hide");
   }
 
   changeVolume() {
