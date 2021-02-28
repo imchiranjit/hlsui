@@ -8,6 +8,9 @@
 .hlsjs-container > .hlsjs-controls {
   position: absolute;
   top: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   width: 100%;
   height: 100%;
   overflow: hidden;
@@ -43,17 +46,17 @@
   z-index: 1;
 }
 
-.hlsjs-controls > .hlsjs-topbar, .hlsjs-toolbar {
-  position: absolute;
+.hlsjs-topbar, .hlsjs-toolbar {
+  position: relative;
   width: 100%;
   padding: .4em;
 }
 .hlsjs-topbar {
-  top: 0;
   display: inline-flex;
 }
 .hlsjs-toolbar {
-  bottom: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .hlsjs-title, .hlsjs-live-tag {
@@ -139,8 +142,18 @@
 }
 
 .hlsjs-toolbar-controls {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-content: center;
   vertical-align: middle;
   position: relative;
+}
+
+.hlsjs-left, .hlsjs-right {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
 }
 
 .hlsjs-ctrl-btn {
@@ -262,7 +275,7 @@
 }
 
 [hide] {
-  display: none;
+  display: none !important;
 }
 
 .hlsjs-controls.hlsjs-live .hlsjs-seek-container,
@@ -285,6 +298,7 @@
   background: #d3d3d3;
   background: linear-gradient(to right, #2196f3 0%, #2196f3 var(--value), #ccc var(--value), #ccc 100%);
   outline: none;
+  margin: 0;
 }
 
 .hlsjs-slider::-webkit-slider-thumb {
@@ -325,7 +339,6 @@
 }
 
 .hlsjs-volume-container {
-  float: right;
   margin: 0 .2em;
 }
 .hlsjs-volume-container:hover {
@@ -367,8 +380,8 @@
 
 
 
+
 .hlsjs-time-container {
-  float: left;
   color: #fff;
   height: 100%;
   overflow: auto;
@@ -379,8 +392,45 @@
 
 .hlsjs-seek-container {
   vertical-align: middle;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-content: center;
+  margin: .5em;
+  position: relative;
 }
 
 .hlsjs-seek {
+  z-index: 1;
   width: 100%;
+  background: linear-gradient(to right, #2196f3 0%, #2196f3 var(--value), rgba(0, 0, 0, 0) var(--value), rgba(0, 0, 0, 0) 100%);
+}
+
+.hlsjs-progress {
+  position: absolute;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 5px;
+  background: #bbb;
+  z-index: 0;
+}
+
+.hlsjs-progress::-webkit-progress-value  {
+    background: #eee;
+    border-radius: 5px;
+}
+
+.hlsjs-progress::-moz-progress-value  {
+    background: #eee;
+    border-radius: 5px;
+}
+
+.hlsjs-progress::-webkit-progress-bar  {
+    background: #bbb;
+    border-radius: 5px;
+}
+.hlsjs-progress::-moz-progress-bar {
+    background: #bbb;
+    border-radius: 5px;
 }
