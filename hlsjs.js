@@ -22,7 +22,11 @@ class HlsUI extends Hls {
       resolution: null,
       speed: null,
       caption: null,
-      qualityMenu: null
+      audioTrack: null,
+      qualityMenu: null,
+      speedMenu: null,
+      subtitleMenu: null,
+      audioMenu: null
     },
     controlsContainer: null,
     videoContainer: null
@@ -34,6 +38,24 @@ class HlsUI extends Hls {
   }
 
   controlsTimeout = null;
+
+  CONSTANTS = {
+    speeds: [
+      {name: "0.25x", value: 0.25, default: false},
+      {name: "0.5x", value: 0.5, default: false},
+      {name: "0.75x", value: 0.75, default: false},
+      {name: "Normal", value: 1.0, default: true},
+      {name: "1.25x", value: 1.25, default: false},
+      {name: "1.5x", value: 1.5, default: false},
+      {name: "1.75x", value: 1.75, default: false},
+      {name: "2x", value: 2.0, default: false}
+    ],
+    trackMode:{
+      disabled: "disabled",
+      hidden: "hidden",
+      showing: "showing"
+    }
+  }
 
   attachMedia(videoElement) {
     this.initUI(videoElement);
@@ -155,10 +177,12 @@ class HlsUI extends Hls {
     var videoResolution = this.createDropdownItem("Resolution", "Auto", "res", null);
     var videoSpeed = this.createDropdownItem("Speed", "Normal", "sp", null, "hlsjs-speed");
     var videoCaption = this.createDropdownItem("Caption", "None", "cp", null);
+    var videoAudio = this.createDropdownItem("Language", "Default", "at", null);
 
     videoDropdown.appendChild(videoResolution);
     videoDropdown.appendChild(videoSpeed);
     videoDropdown.appendChild(videoCaption);
+    videoDropdown.appendChild(videoAudio);
 
     var videoToolbarControlsLeft = document.createElement("div");
 		videoToolbarControlsLeft.setAttribute("class", "hlsjs-left");
@@ -247,6 +271,11 @@ class HlsUI extends Hls {
     this.controls.timeContainer = videoTimeContainer;
     this.controls.seekContainer = videoSeekContainer;
 
+    this.controls.dropdownItem.resolution = videoResolution;
+    this.controls.dropdownItem.speed = videoSpeed;
+    this.controls.dropdownItem.caption = videoCaption;
+    this.controls.dropdownItem.audioTrack = videoAudio;
+
     this.bindControls();
 
   }
@@ -283,6 +312,70 @@ class HlsUI extends Hls {
 
   }
 
+  initDropdown() {
+    this.initQualityMenu();
+    this.initSpeedMenu();
+    this.initAudioMenu();
+  }
+
+  initSpeedMenu() {
+    var _this = this;
+    this.controls.dropdownItem.speedMenu = this.createSelectElement("sp");
+		this.getSpeeds().forEach((item, i) => {
+				this.controls.dropdownItem.speedMenu.appendChild(this.createSelectOptionElement(item.name, i, item.default));
+        if(item.default) {
+          _this.controls.dropdownItem.speedMenu.setAttribute("value", i);
+        }
+		});
+		this.controls.dropdownItem.speedMenu.onchange = function (e) {
+        var value = this.getAttribute("value");
+        //console.log(_this.getSpeed(value));
+				_this.media.playbackRate = _this.getSpeed(value).value;
+        _this.hideDropdown();
+		}
+    this.controls.dropdown.appendChild(this.controls.dropdownItem.speedMenu);
+	}
+
+  initSubtitleMenu() {
+    var _this = this;
+    this.controls.dropdownItem.subtitleMenu = this.createSelectElement("cp");
+    var enabledSub = this.getCurrentSubtitle();
+		this.getSubtitles().forEach((item, i) => {
+      var isEnabled = (item.level == enabledSub.level);
+				this.controls.dropdownItem.subtitleMenu.appendChild(this.createSelectOptionElement(item.name, item.level, isEnabled));
+		});
+		this.controls.dropdownItem.subtitleMenu.onchange = function (e) {
+        var value = this.getAttribute("value");
+        console.log(_this.media.textTracks);
+				_this.enableSubtitle(value);
+        _this.hideDropdown();
+		}
+    this.controls.dropdown.appendChild(this.controls.dropdownItem.subtitleMenu);
+	}
+
+  initAudioMenu() {
+    var _this = this;
+    if(this.audioTracks.length <= 0) {
+      return;
+    }
+    this.controls.dropdownItem.audioMenu = this.createSelectElement("at");
+    var defaultAud = this.getCurrentAudioTrack();
+		this.getAudioTracks().forEach((item, i) => {
+      var isDefault = (item.level == defaultAud.level);
+				this.controls.dropdownItem.audioMenu.appendChild(this.createSelectOptionElement(item.name, item.level, isDefault));
+        if(isDefault) {
+          _this.controls.dropdownItem.audioMenu.setAttribute("value", item.level);
+        }
+		});
+		this.controls.dropdownItem.audioMenu.onchange = function (e) {
+        var value = this.getAttribute("value");
+        //console.log(_this.getAudioTrack(value));
+				_this.audioTrack = _this.getAudioTrack(value).level;
+        _this.hideDropdown();
+		}
+    this.controls.dropdown.appendChild(this.controls.dropdownItem.audioMenu);
+	}
+
   initQualityMenu() {
     var _this = this;
     this.controls.dropdownItem.qualityMenu = this.createSelectElement("res");
@@ -290,13 +383,21 @@ class HlsUI extends Hls {
 				this.controls.dropdownItem.qualityMenu.appendChild(this.createSelectOptionElement(item.name, item.level, (item.level == _this.manualLevel)));
 		});
 		this.controls.dropdownItem.qualityMenu.onchange = function (e) {
-        var value = this.getAttribute("value");
+        var value = parseInt(this.getAttribute("value"));
         //console.log(value);
-				_this.loadLevel = parseInt(value);
+				_this.currentLevel = value;
         _this.hideDropdown();
 		}
     this.controls.dropdown.appendChild(this.controls.dropdownItem.qualityMenu);
 	}
+
+  destroyUI() {
+    this.media.parentNode.parentNode.insertBefore(this.media.parentNode, this.media);
+    this.media.ontimeupdate = null;
+    this.media.ondurationchange = null;
+    this.media.id = this.controls.videoContainer.id;
+    this.controls.videoContainer.remove();
+  }
 
   bindControls() {
     var _this = this;
@@ -309,6 +410,7 @@ class HlsUI extends Hls {
       }
     });
     this.on(this.constructor.Events.ERROR, function (event, data) {
+      console.log(data);
       if (data.fatal) {
         switch (data.type) {
           case _this.constructor.ErrorTypes.NETWORK_ERROR:
@@ -318,6 +420,7 @@ class HlsUI extends Hls {
             break;
           case _this.constructor.ErrorTypes.MEDIA_ERROR:
             console.log('fatal media error encountered, try to recover');
+            _this.destroyUI();
             _this.recoverMediaError();
             break;
           default:
@@ -359,7 +462,7 @@ class HlsUI extends Hls {
         _this.hideControls();
         _this.controls.bgPlay.innerHTML = "pause_arrow";
         _this.controls.play.innerHTML = "pause_arrow";
-        _this.hideLoader();
+        //_this.hideLoader();
       };
 
       _this.media.onpause = function() {
@@ -372,7 +475,6 @@ class HlsUI extends Hls {
         _this.updateSeekBar();
         _this.updateBufferedProgress();
         _this.hideLoader();
-        //console.log(_this.isLive());
       };
 
       _this.controls.seek.oninput = function() {
@@ -395,6 +497,13 @@ class HlsUI extends Hls {
           _this.notLive();
         }
       };
+
+      _this.media.textTracks.onaddtrack = function(event) {
+        console.log(event);
+        if(_this.controls.dropdownItem.subtitleMenu == null) {
+          _this.initSubtitleMenu();
+        }
+      }
 
       _this.controls.backface.onclick = function() {
         //console.log("backface_clicked");
@@ -424,7 +533,7 @@ class HlsUI extends Hls {
 
     });
     this.on(this.constructor.Events.MANIFEST_PARSED, function (event, data) {
-      _this.initQualityMenu();
+      _this.initDropdown();
     });
   }
 
@@ -453,6 +562,93 @@ class HlsUI extends Hls {
     }
   }
 
+  //Speed methods
+  getSpeeds() {
+    return this.CONSTANTS.speeds;
+  }
+
+  getSpeed(val) {
+    return this.CONSTANTS.speeds[parseInt(val)];
+  }
+
+  getCurrentSpeed() {
+    return this.getSpeed(parseInt(this.controls.dropdownItem.speedMenu.getAttribute("value")));
+  }
+  //
+
+  //Audio tracks methods
+  getAudioTracks() {
+    var qua = [];
+    this.audioTracks.forEach((item, i) => {
+			qua.push({"name": this.getLang(item.lang).name, "level" : i});
+		});
+    return qua;
+  }
+
+  getAudioTrack(val) {
+    val = parseInt(val);
+    var aud = {"name": "UNK", "level" : -1}
+    this.getAudioTracks().forEach(function(item, i) {
+      if(item.level == val) {
+        aud = item;
+      }
+    });
+    return aud;
+  }
+
+  getCurrentAudioTrack() {
+    return this.getAudioTrack(this.audioTrack);
+  }
+  //
+
+  //Subtitles methods
+  getSubtitles() {
+    var qua = [];
+    qua.push({name: "None", level: -1})
+    for(var i = 0; i < this.media.textTracks.length; i++) {
+      var item = this.media.textTracks[i];
+      qua.push({name: this.getLang(item.language).name, level: i})
+    }
+    return qua;
+  }
+
+  getSubtitle(val) {
+    val = parseInt(val);
+    var sub = {"name": "None", "level" : -1};
+    this.getSubtitles().forEach(function(item, i) {
+      if(item.level == val) {
+        sub = item;
+      }
+    });
+    return sub;
+  }
+
+  getCurrentSubtitle() {
+    var sub = {"name": "None", "level" : -1};
+    for(var i = 0; i < this.media.textTracks.length; i++) {
+      var item = this.media.textTracks[i];
+      if(item.mode == "showing"){
+        sub = {name: this.getLang(item.language).name, level: i};
+        break;
+      }
+    }
+    return sub;
+  }
+
+  enableSubtitle(val) {
+    val = parseInt(val);
+    for(var i = 0; i < this.media.textTracks.length; i++) {
+      var track = this.media.textTracks[i];
+      if(i == val){
+        track.mode = this.CONSTANTS.trackMode.showing;
+      } else {
+        track.mode = this.CONSTANTS.trackMode.disabled;
+      }
+    }
+  }
+  //
+
+  //Video quality methods
   getVideoQualities() {
     var qua = [];
     qua.push({"name": "Auto", "level" : -1});
@@ -480,6 +676,7 @@ class HlsUI extends Hls {
               (this.manualLevel==-1? "("+this.getQualityName(this.currentLevel)+")":""),
       "level": this.manualLevel};
   }
+  //
 
   initSlider() {
     var _this = this;
@@ -505,7 +702,7 @@ class HlsUI extends Hls {
       var end = media.buffered.end(i);
       if(start <= media.currentTime && media.currentTime <= end) {
         var value = parseFloat((end/duration)*ref);
-        this.controls.bufferedProgress.value = value;
+        this.controls.bufferedProgress.value = (Number.isNaN(value) ? 0 : value);
         break;
       }
     }
@@ -689,7 +886,9 @@ class HlsUI extends Hls {
       var child = children.item(i);
       if(child.hasAttribute("cat")) {
         if(child.getAttribute("cat") == tp) {
-          catChild = child;
+          if(child.children.length > 0) {
+            catChild = child;
+          }
         }
       }
     }
@@ -715,6 +914,15 @@ class HlsUI extends Hls {
 
         if(item.getAttribute("tp") == "res") {
           item.querySelector(".it-val").innerHTML = this.getCurrentQuality().name;
+        }
+        if(item.getAttribute("tp") == "sp") {
+          item.querySelector(".it-val").innerHTML = this.getCurrentSpeed().name;
+        }
+        if(item.getAttribute("tp") == "at") {
+          item.querySelector(".it-val").innerHTML = this.getCurrentAudioTrack().name;
+        }
+        if(item.getAttribute("tp") == "cp") {
+          item.querySelector(".it-val").innerHTML = this.getCurrentSubtitle().name;
         }
 
         item.removeAttribute("hide");
@@ -876,6 +1084,21 @@ class HlsUI extends Hls {
   hasClass(element, name) {
   	var arr = element.className.split(" ");
   	return (arr.indexOf(name) != -1);
+  }
+
+  //get Language info
+  getLang(lang) {
+      /**
+     * @author Phil Teare
+     * using wikipedia data
+     */
+    var isoLangs={ab:{name:"Abkhaz",nativeName:"аҧсуа"},aa:{name:"Afar",nativeName:"Afaraf"},af:{name:"Afrikaans",nativeName:"Afrikaans"},ak:{name:"Akan",nativeName:"Akan"},sq:{name:"Albanian",nativeName:"Shqip"},am:{name:"Amharic",nativeName:"አማርኛ"},ar:{name:"Arabic",nativeName:"العربية"},an:{name:"Aragonese",nativeName:"Aragonés"},hy:{name:"Armenian",nativeName:"Հայերեն"},as:{name:"Assamese",nativeName:"অসমীয়া"},av:{name:"Avaric",nativeName:"авар мацӀ, магӀарул мацӀ"},ae:{name:"Avestan",nativeName:"avesta"},ay:{name:"Aymara",nativeName:"aymar aru"},az:{name:"Azerbaijani",nativeName:"azərbaycan dili"},bm:{name:"Bambara",nativeName:"bamanankan"},ba:{name:"Bashkir",nativeName:"башҡорт теле"},eu:{name:"Basque",nativeName:"euskara, euskera"},be:{name:"Belarusian",nativeName:"Беларуская"},bn:{name:"Bengali",nativeName:"বাংলা"},bh:{name:"Bihari",nativeName:"भोजपुरी"},bi:{name:"Bislama",nativeName:"Bislama"},bs:{name:"Bosnian",nativeName:"bosanski jezik"},br:{name:"Breton",nativeName:"brezhoneg"},bg:{name:"Bulgarian",nativeName:"български език"},my:{name:"Burmese",nativeName:"ဗမာစာ"},ca:{name:"Catalan; Valencian",nativeName:"Català"},ch:{name:"Chamorro",nativeName:"Chamoru"},ce:{name:"Chechen",nativeName:"нохчийн мотт"},ny:{name:"Chichewa; Chewa; Nyanja",nativeName:"chiCheŵa, chinyanja"},zh:{name:"Chinese",nativeName:"中文 (Zhōngwén), 汉语, 漢語"},cv:{name:"Chuvash",nativeName:"чӑваш чӗлхи"},kw:{name:"Cornish",nativeName:"Kernewek"},co:{name:"Corsican",nativeName:"corsu, lingua corsa"},cr:{name:"Cree",nativeName:"ᓀᐦᐃᔭᐍᐏᐣ"},hr:{name:"Croatian",nativeName:"hrvatski"},cs:{name:"Czech",nativeName:"česky, čeština"},da:{name:"Danish",nativeName:"dansk"},dv:{name:"Divehi; Dhivehi; Maldivian;",nativeName:"ދިވެހި"},nl:{name:"Dutch",nativeName:"Nederlands, Vlaams"},en:{name:"English",nativeName:"English"},eo:{name:"Esperanto",nativeName:"Esperanto"},et:{name:"Estonian",nativeName:"eesti, eesti keel"},ee:{name:"Ewe",nativeName:"Eʋegbe"},fo:{name:"Faroese",nativeName:"føroyskt"},fj:{name:"Fijian",nativeName:"vosa Vakaviti"},fi:{name:"Finnish",nativeName:"suomi, suomen kieli"},fr:{name:"French",nativeName:"français, langue française"},ff:{name:"Fula; Fulah; Pulaar; Pular",nativeName:"Fulfulde, Pulaar, Pular"},gl:{name:"Galician",nativeName:"Galego"},ka:{name:"Georgian",nativeName:"ქართული"},de:{name:"German",nativeName:"Deutsch"},el:{name:"Greek, Modern",nativeName:"Ελληνικά"},gn:{name:"Guaraní",nativeName:"Avañeẽ"},gu:{name:"Gujarati",nativeName:"ગુજરાતી"},ht:{name:"Haitian; Haitian Creole",nativeName:"Kreyòl ayisyen"},ha:{name:"Hausa",nativeName:"Hausa, هَوُسَ"},he:{name:"Hebrew (modern)",nativeName:"עברית"},hz:{name:"Herero",nativeName:"Otjiherero"},hi:{name:"Hindi",nativeName:"हिन्दी, हिंदी"},ho:{name:"Hiri Motu",nativeName:"Hiri Motu"},hu:{name:"Hungarian",nativeName:"Magyar"},ia:{name:"Interlingua",nativeName:"Interlingua"},id:{name:"Indonesian",nativeName:"Bahasa Indonesia"},ie:{name:"Interlingue",nativeName:"Originally called Occidental; then Interlingue after WWII"},ga:{name:"Irish",nativeName:"Gaeilge"},ig:{name:"Igbo",nativeName:"Asụsụ Igbo"},ik:{name:"Inupiaq",nativeName:"Iñupiaq, Iñupiatun"},io:{name:"Ido",nativeName:"Ido"},is:{name:"Icelandic",nativeName:"Íslenska"},it:{name:"Italian",nativeName:"Italiano"},iu:{name:"Inuktitut",nativeName:"ᐃᓄᒃᑎᑐᑦ"},ja:{name:"Japanese",nativeName:"日本語 (にほんご／にっぽんご)"},jv:{name:"Javanese",nativeName:"basa Jawa"},kl:{name:"Kalaallisut, Greenlandic",nativeName:"kalaallisut, kalaallit oqaasii"},kn:{name:"Kannada",nativeName:"ಕನ್ನಡ"},kr:{name:"Kanuri",nativeName:"Kanuri"},ks:{name:"Kashmiri",nativeName:"कश्मीरी, كشميري‎"},kk:{name:"Kazakh",nativeName:"Қазақ тілі"},km:{name:"Khmer",nativeName:"ភាសាខ្មែរ"},ki:{name:"Kikuyu, Gikuyu",nativeName:"Gĩkũyũ"},rw:{name:"Kinyarwanda",nativeName:"Ikinyarwanda"},ky:{name:"Kirghiz, Kyrgyz",nativeName:"кыргыз тили"},kv:{name:"Komi",nativeName:"коми кыв"},kg:{name:"Kongo",nativeName:"KiKongo"},ko:{name:"Korean",nativeName:"한국어 (韓國語), 조선말 (朝鮮語)"},ku:{name:"Kurdish",nativeName:"Kurdî, كوردی‎"},kj:{name:"Kwanyama, Kuanyama",nativeName:"Kuanyama"},la:{name:"Latin",nativeName:"latine, lingua latina"},lb:{name:"Luxembourgish, Letzeburgesch",nativeName:"Lëtzebuergesch"},lg:{name:"Luganda",nativeName:"Luganda"},li:{name:"Limburgish, Limburgan, Limburger",nativeName:"Limburgs"},ln:{name:"Lingala",nativeName:"Lingála"},lo:{name:"Lao",nativeName:"ພາສາລາວ"},lt:{name:"Lithuanian",nativeName:"lietuvių kalba"},lu:{name:"Luba-Katanga",nativeName:""},lv:{name:"Latvian",nativeName:"latviešu valoda"},gv:{name:"Manx",nativeName:"Gaelg, Gailck"},mk:{name:"Macedonian",nativeName:"македонски јазик"},mg:{name:"Malagasy",nativeName:"Malagasy fiteny"},ms:{name:"Malay",nativeName:"bahasa Melayu, بهاس ملايو‎"},ml:{name:"Malayalam",nativeName:"മലയാളം"},mt:{name:"Maltese",nativeName:"Malti"},mi:{name:"Māori",nativeName:"te reo Māori"},mr:{name:"Marathi (Marāṭhī)",nativeName:"मराठी"},mh:{name:"Marshallese",nativeName:"Kajin M̧ajeļ"},mn:{name:"Mongolian",nativeName:"монгол"},na:{name:"Nauru",nativeName:"Ekakairũ Naoero"},nv:{name:"Navajo, Navaho",nativeName:"Diné bizaad, Dinékʼehǰí"},nb:{name:"Norwegian Bokmål",nativeName:"Norsk bokmål"},nd:{name:"North Ndebele",nativeName:"isiNdebele"},ne:{name:"Nepali",nativeName:"नेपाली"},ng:{name:"Ndonga",nativeName:"Owambo"},nn:{name:"Norwegian Nynorsk",nativeName:"Norsk nynorsk"},no:{name:"Norwegian",nativeName:"Norsk"},ii:{name:"Nuosu",nativeName:"ꆈꌠ꒿ Nuosuhxop"},nr:{name:"South Ndebele",nativeName:"isiNdebele"},oc:{name:"Occitan",nativeName:"Occitan"},oj:{name:"Ojibwe, Ojibwa",nativeName:"ᐊᓂᔑᓈᐯᒧᐎᓐ"},cu:{name:"Old Church Slavonic, Church Slavic, Church Slavonic, Old Bulgarian, Old Slavonic",nativeName:"ѩзыкъ словѣньскъ"},om:{name:"Oromo",nativeName:"Afaan Oromoo"},or:{name:"Oriya",nativeName:"ଓଡ଼ିଆ"},os:{name:"Ossetian, Ossetic",nativeName:"ирон æвзаг"},pa:{name:"Panjabi, Punjabi",nativeName:"ਪੰਜਾਬੀ, پنجابی‎"},pi:{name:"Pāli",nativeName:"पाऴि"},fa:{name:"Persian",nativeName:"فارسی"},pl:{name:"Polish",nativeName:"polski"},ps:{name:"Pashto, Pushto",nativeName:"پښتو"},pt:{name:"Portuguese",nativeName:"Português"},qu:{name:"Quechua",nativeName:"Runa Simi, Kichwa"},rm:{name:"Romansh",nativeName:"rumantsch grischun"},rn:{name:"Kirundi",nativeName:"kiRundi"},ro:{name:"Romanian, Moldavian, Moldovan",nativeName:"română"},ru:{name:"Russian",nativeName:"русский язык"},sa:{name:"Sanskrit (Saṁskṛta)",nativeName:"संस्कृतम्"},sc:{name:"Sardinian",nativeName:"sardu"},sd:{name:"Sindhi",nativeName:"सिन्धी, سنڌي، سندھی‎"},se:{name:"Northern Sami",nativeName:"Davvisámegiella"},sm:{name:"Samoan",nativeName:"gagana faa Samoa"},sg:{name:"Sango",nativeName:"yângâ tî sängö"},sr:{name:"Serbian",nativeName:"српски језик"},gd:{name:"Scottish Gaelic; Gaelic",nativeName:"Gàidhlig"},sn:{name:"Shona",nativeName:"chiShona"},si:{name:"Sinhala, Sinhalese",nativeName:"සිංහල"},sk:{name:"Slovak",nativeName:"slovenčina"},sl:{name:"Slovene",nativeName:"slovenščina"},so:{name:"Somali",nativeName:"Soomaaliga, af Soomaali"},st:{name:"Southern Sotho",nativeName:"Sesotho"},es:{name:"Spanish; Castilian",nativeName:"español, castellano"},su:{name:"Sundanese",nativeName:"Basa Sunda"},sw:{name:"Swahili",nativeName:"Kiswahili"},ss:{name:"Swati",nativeName:"SiSwati"},sv:{name:"Swedish",nativeName:"svenska"},ta:{name:"Tamil",nativeName:"தமிழ்"},te:{name:"Telugu",nativeName:"తెలుగు"},tg:{name:"Tajik",nativeName:"тоҷикӣ, toğikī, تاجیکی‎"},th:{name:"Thai",nativeName:"ไทย"},ti:{name:"Tigrinya",nativeName:"ትግርኛ"},bo:{name:"Tibetan Standard, Tibetan, Central",nativeName:"བོད་ཡིག"},tk:{name:"Turkmen",nativeName:"Türkmen, Түркмен"},tl:{name:"Tagalog",nativeName:"Wikang Tagalog, ᜏᜒᜃᜅ᜔ ᜆᜄᜎᜓᜄ᜔"},tn:{name:"Tswana",nativeName:"Setswana"},to:{name:"Tonga (Tonga Islands)",nativeName:"faka Tonga"},tr:{name:"Turkish",nativeName:"Türkçe"},ts:{name:"Tsonga",nativeName:"Xitsonga"},tt:{name:"Tatar",nativeName:"татарча, tatarça, تاتارچا‎"},tw:{name:"Twi",nativeName:"Twi"},ty:{name:"Tahitian",nativeName:"Reo Tahiti"},ug:{name:"Uighur, Uyghur",nativeName:"Uyƣurqə, ئۇيغۇرچە‎"},uk:{name:"Ukrainian",nativeName:"українська"},ur:{name:"Urdu",nativeName:"اردو"},uz:{name:"Uzbek",nativeName:"zbek, Ўзбек, أۇزبېك‎"},ve:{name:"Venda",nativeName:"Tshivenḓa"},vi:{name:"Vietnamese",nativeName:"Tiếng Việt"},vo:{name:"Volapük",nativeName:"Volapük"},wa:{name:"Walloon",nativeName:"Walon"},cy:{name:"Welsh",nativeName:"Cymraeg"},wo:{name:"Wolof",nativeName:"Wollof"},fy:{name:"Western Frisian",nativeName:"Frysk"},xh:{name:"Xhosa",nativeName:"isiXhosa"},yi:{name:"Yiddish",nativeName:"ייִדיש"},yo:{name:"Yoruba",nativeName:"Yorùbá"},za:{name:"Zhuang, Chuang",nativeName:"Saɯ cueŋƅ, Saw cuengh"}};
+
+    var langcode = lang.slice(0, 2).toLowerCase();
+    if(isoLangs.hasOwnProperty(langcode)) {
+      return isoLangs[langcode];
+    }
+    return {name: "UNKNOWN", nativeName: "UNKNOWN"}
   }
 
 
