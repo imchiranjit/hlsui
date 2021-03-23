@@ -123,7 +123,7 @@ class HlsUI extends Hls {
 		videoToolbarControls.setAttribute("class", "hlsjs-toolbar-controls");
 
 		var videoPlayPauseBtn = document.createElement("button");
-		videoPlayPauseBtn.setAttribute("class", "hlsjs-ctrl-btn material-icons-round");
+		videoPlayPauseBtn.setAttribute("class", "hlsjs-ctrl-btn");
 		videoPlayPauseBtn.innerHTML = "play_arrow";
 
     // current time and duration
@@ -157,18 +157,18 @@ class HlsUI extends Hls {
     videoVolumeSlider.setAttribute("value", "1");
 
 		var videoVolumeBtn = document.createElement("button");
-		videoVolumeBtn.setAttribute("class", "hlsjs-ctrl-btn material-icons-round");
+		videoVolumeBtn.setAttribute("class", "hlsjs-ctrl-btn");
 		videoVolumeBtn.innerHTML = "volume_up";
 
     videoVolumeContainer.appendChild(videoVolumeSlider);
     videoVolumeContainer.appendChild(videoVolumeBtn);
 
 		var videoMoreBtn = document.createElement("button");
-		videoMoreBtn.setAttribute("class", "hlsjs-ctrl-btn material-icons-round");
+		videoMoreBtn.setAttribute("class", "hlsjs-ctrl-btn");
 		videoMoreBtn.innerHTML = "more_vert";
 
 		var videoFSBtn = document.createElement("button");
-		videoFSBtn.setAttribute("class", "hlsjs-ctrl-btn material-icons-round");
+		videoFSBtn.setAttribute("class", "hlsjs-ctrl-btn");
 		videoFSBtn.innerHTML = "fullscreen";
 
     var videoDropdown = document.createElement("div");
@@ -227,7 +227,7 @@ class HlsUI extends Hls {
     videoToolbar.appendChild(videoSeekContainer);
 
 		var videoBigPlayBtn = document.createElement("button");
-		videoBigPlayBtn.setAttribute("class", "hlsjs-big-play-btn material-icons-round");
+		videoBigPlayBtn.setAttribute("class", "hlsjs-big-play-btn");
 		videoBigPlayBtn.innerHTML = "play_arrow";
 
     var videoLoader = document.createElement("div");
