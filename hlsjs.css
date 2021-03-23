@@ -423,7 +423,8 @@
   vertical-align: middle;
 }
 
-.hlsjs-current-time {
+.hlsjs-current-time,
+.hlsjs-current-duration {
   font-family: sans-serif;
 }
 
