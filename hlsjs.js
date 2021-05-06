@@ -1,6 +1,7 @@
 class HlsUI extends Hls {
 
   controls = {
+    videoTitle: null,
     loader: null,
     bgPlay: null,
     play : null,
@@ -23,32 +24,25 @@ class HlsUI extends Hls {
       speed: null,
       caption: null,
       audioTrack: null,
-      qualityMenu: null,
-      speedMenu: null,
-      subtitleMenu: null,
-      audioMenu: null
     },
     controlsContainer: null,
     videoContainer: null
   };
 
-  videoConfig = {
-    title: "",
-    live: null
-  }
+  playerConfig = {}
 
   controlsTimeout = null;
 
   CONSTANTS = {
     speeds: [
-      {name: "0.25x", value: 0.25, default: false},
-      {name: "0.5x", value: 0.5, default: false},
-      {name: "0.75x", value: 0.75, default: false},
-      {name: "Normal", value: 1.0, default: true},
-      {name: "1.25x", value: 1.25, default: false},
-      {name: "1.5x", value: 1.5, default: false},
-      {name: "1.75x", value: 1.75, default: false},
-      {name: "2x", value: 2.0, default: false}
+      {name: "0.25x", value: 0.25},
+      {name: "0.5x", value: 0.5},
+      {name: "0.75x", value: 0.75},
+      {name: "Normal", value: 1.0},
+      {name: "1.25x", value: 1.25},
+      {name: "1.5x", value: 1.5},
+      {name: "1.75x", value: 1.75},
+      {name: "2x", value: 2.0}
     ],
     trackMode:{
       disabled: "disabled",
@@ -62,18 +56,41 @@ class HlsUI extends Hls {
     super.attachMedia(videoElement);
   }
 
-  setConfig(options=null) {
-    if(options != null) {
-      if(options.hasOwnProperty('title')) {
-        this.videoConfig.title = options.title;
+  loadSource(opt) {
+    if(typeof(opt) === "string") {
+      super.loadSource(opt);
+    } else {
+      this.playerConfig = opt;
+      try {
+        super.loadSource(opt.source);
+      } catch(e) {
+        console.error("source must be defined");
       }
-      if(options.hasOwnProperty('live')) {
-        this.videoConfig.live = options.live;
-      }
+      this.initConfig();
     }
   }
 
-  initUI(videoElement, title) {
+  //////////////////////
+  getVideoTitle() {
+    return this.playerConfig.hasOwnProperty('title') ? this.playerConfig.title : "";
+  }
+  //////////////////////
+
+  initConfig() {
+    var _this = this;
+    this.controls.videoTitle.innerHTML = this.getVideoTitle();
+    if(this.playerConfig.hasOwnProperty("playbackRate")) {
+      this.CONSTANTS.speeds = [];
+      var el = this.playerConfig.playbackRate;
+      Object.keys(el).forEach((item, i) => {
+        _this.CONSTANTS.speeds.push({name: el[item], value: parseFloat(item)});
+      });
+    }
+  }
+
+  initUI(videoElement) {
+
+    var _this = this;
 
     //videoElement = document.querySelector(id);
 		videoElement.controls = false;
@@ -106,7 +123,6 @@ class HlsUI extends Hls {
 
 		var videoTitle = document.createElement("span");
 		videoTitle.setAttribute("class", "hlsjs-title");
-		videoTitle.innerHTML = this.videoConfig.title;
 
 		var videoLiveTag = document.createElement("button");
 		videoLiveTag.setAttribute("class", "hlsjs-live-tag");
@@ -174,10 +190,26 @@ class HlsUI extends Hls {
     var videoDropdown = document.createElement("div");
 		videoDropdown.setAttribute("class", "hlsjs-dropdown");
 
-    var videoResolution = this.createDropdownItem("Resolution", "Auto", "res", null);
-    var videoSpeed = this.createDropdownItem("Speed", "Normal", "sp", null, "hlsjs-speed");
-    var videoCaption = this.createDropdownItem("Caption", "None", "cp", null);
-    var videoAudio = this.createDropdownItem("Language", "Default", "at", null);
+    var videoResolution = this.createSelect("Resolution", "Auto", function(el) {
+      _this.initQualitySelect(el);
+    }, function(v) {
+      _this.changeQualitySelect(v);
+    });
+    var videoSpeed = this.createSelect("Speed", "Normal", function(el) {
+      _this.initSpeedSelect(el);
+    }, function(v) {
+      _this.changeSpeedSelect(v);
+    });
+    var videoCaption = this.createSelect("Caption", "None", function(el) {
+      _this.initSubtitleSelect(el);
+    }, function(v) {
+      _this.changeSubtitleSelect(v);
+    });
+    var videoAudio = this.createSelect("Language", "Default", function(el) {
+      _this.initAudioSelect(el);
+    }, function(v) {
+      _this.changeAudioSelect(v);
+    });
 
     videoDropdown.appendChild(videoResolution);
     videoDropdown.appendChild(videoSpeed);
@@ -251,6 +283,8 @@ class HlsUI extends Hls {
       videoBigPlayBtn.setAttribute("hide", "true");
     }
 
+    this.controls.videoTitle = videoTitle;
+
     this.controls.backface = videoBackFace;
     this.controls.title = videoTitle;
     this.controls.liveTag = videoLiveTag;
@@ -313,83 +347,48 @@ class HlsUI extends Hls {
   }
 
   initDropdown() {
-    this.initQualityMenu();
-    this.initSpeedMenu();
-    this.initAudioMenu();
+
   }
 
-  initSpeedMenu() {
-    var _this = this;
-    this.controls.dropdownItem.speedMenu = this.createSelectElement("sp");
-		this.getSpeeds().forEach((item, i) => {
-				this.controls.dropdownItem.speedMenu.appendChild(this.createSelectOptionElement(item.name, i, item.default));
-        if(item.default) {
-          _this.controls.dropdownItem.speedMenu.setAttribute("value", i);
-        }
+  initSpeedSelect(el) {
+    var cur = this.getCurrentSpeed();
+    this.getSpeeds().forEach((item, i) => {
+				el.appendChild(this.createSelectOption(item.name, i, i == cur.id));
 		});
-		this.controls.dropdownItem.speedMenu.onchange = function (e) {
-        var value = this.getAttribute("value");
-        //console.log(_this.getSpeed(value));
-				_this.media.playbackRate = _this.getSpeed(value).value;
-        _this.hideDropdown();
-		}
-    this.controls.dropdown.appendChild(this.controls.dropdownItem.speedMenu);
-	}
+  }
+  changeSpeedSelect(v) {
+    this.media.playbackRate = this.getSpeed(v).value;
+  }
 
-  initSubtitleMenu() {
-    var _this = this;
-    this.controls.dropdownItem.subtitleMenu = this.createSelectElement("cp");
+  initSubtitleSelect(el) {
     var enabledSub = this.getCurrentSubtitle();
-		this.getSubtitles().forEach((item, i) => {
-      var isEnabled = (item.level == enabledSub.level);
-				this.controls.dropdownItem.subtitleMenu.appendChild(this.createSelectOptionElement(item.name, item.level, isEnabled));
+    this.getSubtitles().forEach((item, i) => {
+      el.appendChild(this.createSelectOption(item.name, item.level, item.level == enabledSub.level));
 		});
-		this.controls.dropdownItem.subtitleMenu.onchange = function (e) {
-        var value = this.getAttribute("value");
-        console.log(_this.media.textTracks);
-				_this.enableSubtitle(value);
-        _this.hideDropdown();
-		}
-    this.controls.dropdown.appendChild(this.controls.dropdownItem.subtitleMenu);
-	}
+  }
+  changeSubtitleSelect(v) {
+    this.enableSubtitle(v);
+  }
 
-  initAudioMenu() {
-    var _this = this;
-    if(this.audioTracks.length <= 0) {
-      return;
-    }
-    this.controls.dropdownItem.audioMenu = this.createSelectElement("at");
+  initAudioSelect(el) {
     var defaultAud = this.getCurrentAudioTrack();
 		this.getAudioTracks().forEach((item, i) => {
-      var isDefault = (item.level == defaultAud.level);
-				this.controls.dropdownItem.audioMenu.appendChild(this.createSelectOptionElement(item.name, item.level, isDefault));
-        if(isDefault) {
-          _this.controls.dropdownItem.audioMenu.setAttribute("value", item.level);
-        }
+			el.appendChild(this.createSelectOption(item.name, item.level, item.level == defaultAud.level));
 		});
-		this.controls.dropdownItem.audioMenu.onchange = function (e) {
-        var value = this.getAttribute("value");
-        //console.log(_this.getAudioTrack(value));
-				_this.audioTrack = _this.getAudioTrack(value).level;
-        _this.hideDropdown();
-		}
-    this.controls.dropdown.appendChild(this.controls.dropdownItem.audioMenu);
-	}
+  }
+  changeAudioSelect(v) {
+    this.audioTrack = this.getAudioTrack(v).level;
+  }
 
-  initQualityMenu() {
-    var _this = this;
-    this.controls.dropdownItem.qualityMenu = this.createSelectElement("res");
-		this.getVideoQualities().forEach((item, i) => {
-				this.controls.dropdownItem.qualityMenu.appendChild(this.createSelectOptionElement(item.name, item.level, (item.level == _this.manualLevel)));
+  initQualitySelect(el) {
+    var manualLevel = this.manualLevel;
+    this.getVideoQualities().forEach((item, i) => {
+				el.appendChild(this.createSelectOption(item.name, item.level, (item.level == manualLevel)));
 		});
-		this.controls.dropdownItem.qualityMenu.onchange = function (e) {
-        var value = parseInt(this.getAttribute("value"));
-        //console.log(value);
-				_this.currentLevel = value;
-        _this.hideDropdown();
-		}
-    this.controls.dropdown.appendChild(this.controls.dropdownItem.qualityMenu);
-	}
+  }
+  changeQualitySelect(v) {
+    this.currentLevel = parseInt(v);
+  }
 
   destroyUI() {
     this.media.parentNode.parentNode.insertBefore(this.media.parentNode, this.media);
@@ -498,13 +497,6 @@ class HlsUI extends Hls {
         }
       };
 
-      _this.media.textTracks.onaddtrack = function(event) {
-        console.log(event);
-        if(_this.controls.dropdownItem.subtitleMenu == null) {
-          _this.initSubtitleMenu();
-        }
-      }
-
       _this.controls.backface.onclick = function() {
         //console.log("backface_clicked");
         _this.backfaceClicked();
@@ -572,7 +564,14 @@ class HlsUI extends Hls {
   }
 
   getCurrentSpeed() {
-    return this.getSpeed(parseInt(this.controls.dropdownItem.speedMenu.getAttribute("value")));
+    var len = this.CONSTANTS.speeds.length;
+    for(var i = 0; i < len; i++) {
+      var el = this.CONSTANTS.speeds[i];
+      if(el.value == this.media.playbackRate) {
+        return {name: el.name, value: el.value, id: i};
+      }
+    }
+    return null;
   }
   //
 
@@ -648,13 +647,22 @@ class HlsUI extends Hls {
   }
   //
 
+  getUserQualityMap() {
+    return this.playerConfig.hasOwnProperty("qualityLabel") ? this.playerConfig.qualityLabel : {};
+  }
+
   //Video quality methods
   getVideoQualities() {
+    var _this = this;
     var qua = [];
     qua.push({"name": "Auto", "level" : -1});
     this.levels.forEach((item, i) => {
 			if(item.width){
-				qua.push({"name": item.height+"p", "level" : i});
+				qua.push({
+          "name": _this.getUserQualityMap().hasOwnProperty(item.bitrate) ? _this.getUserQualityMap()[item.bitrate] : item.height+"p",
+           "level" : i
+         }
+       );
 			}
 		});
     return qua;
@@ -743,8 +751,8 @@ class HlsUI extends Hls {
   }
 
   isLive() {
-    if(this.videoConfig.live != null) {
-      return this.videoConfig.live;
+    if(this.playerConfig.hasOwnProperty("live")) {
+      return this.playerConfig.live;
     }
     try {
       var cl = this.currentLevel;
@@ -865,7 +873,6 @@ class HlsUI extends Hls {
   hideDropdown() {
     this.controls.dropdown.removeAttribute("shown");
     this.controls.controlsContainer.removeAttribute("dropdown");
-    //this.refreshDropdown();
     this.hideControls();
   }
 
@@ -910,26 +917,21 @@ class HlsUI extends Hls {
     var dropdownItems = this.controls.dropdown.children;
     for(var i = 0; i < dropdownItems.length; i++) {
       var item = dropdownItems.item(i);
-      if(item.hasAttribute("tp")) {
-
-        if(item.getAttribute("tp") == "res") {
-          item.querySelector(".it-val").innerHTML = this.getCurrentQuality().name;
-        }
-        if(item.getAttribute("tp") == "sp") {
-          item.querySelector(".it-val").innerHTML = this.getCurrentSpeed().name;
-        }
-        if(item.getAttribute("tp") == "at") {
-          item.querySelector(".it-val").innerHTML = this.getCurrentAudioTrack().name;
-        }
-        if(item.getAttribute("tp") == "cp") {
-          item.querySelector(".it-val").innerHTML = this.getCurrentSubtitle().name;
-        }
-
-        item.removeAttribute("hide");
-      } else {
-        item.setAttribute("hide", "true");
-      }
+      item.removeAttribute("show");
+      item.removeAttribute("hide");
     }
+
+    var currentSpeed = this.getCurrentSpeed();
+    this.setSelectValue(this.controls.dropdownItem.speed, currentSpeed.name, currentSpeed.id);
+
+    var currentQuality = this.getCurrentQuality();
+    this.setSelectValue(this.controls.dropdownItem.resolution, currentQuality.name, currentQuality.level);
+
+    var currentAudio = this.getCurrentAudioTrack();
+    this.setSelectValue(this.controls.dropdownItem.audioTrack, currentAudio.name, currentAudio.level);
+
+    var currentSubtitle = this.getCurrentSubtitle();
+    this.setSelectValue(this.controls.dropdownItem.caption, currentSubtitle.name, currentSubtitle.level);
   }
 
   isDropdownShown() {
@@ -988,63 +990,100 @@ class HlsUI extends Hls {
       document.msFullscreenElement);
   }
 
-  createSelectElement(cat=null) {
-    //console.log("select")
+  createSelect(name, value, init, chg) {
     var _this = this;
     var select = document.createElement("div");
     select.setAttribute("class", "hlsjs-select");
-    if(cat != null) {
-      select.setAttribute("cat", cat);
+
+    var selectMain = document.createElement("div");
+    selectMain.setAttribute("class", "hlsjs-select-main hlsjs-select-option");
+
+    var nm = document.createElement("span")
+    nm.setAttribute("class", "hlsjs-select-option-name");
+    nm.innerHTML = name;
+    var vl = document.createElement("span")
+    vl.setAttribute("class", "hlsjs-select-option-selected");
+    vl.innerHTML = value;
+
+    selectMain.appendChild(nm);
+    selectMain.appendChild(vl);
+
+    var selectContainer = document.createElement("div");
+    selectContainer.setAttribute("class", "hlsjs-select-container");
+
+    select.appendChild(selectMain);
+    select.appendChild(selectContainer);
+
+    selectMain.onclick = function() {
+      if(select.hasAttribute("show")) {
+        select.removeAttribute("show");
+      } else {
+        select.parentElement.childNodes.forEach((item, i) => {
+          if(select != item) {
+            item.setAttribute("hide", "true");
+          }
+        });
+        while (selectContainer.firstChild) {
+          selectContainer.removeChild(selectContainer.firstChild);
+        }
+        init(selectContainer);
+        select.setAttribute("show", "true");
+      }
     }
-    select.addEventListener("click", function(e) {
-       var target = e.target;
-       if(target == this) {
-         return;
-       }
-       while(target != document.body) {
-           if(_this.hasClass(target, "hlsjs-select-option")) {
-              var value = target.getAttribute("value");
-               this.setAttribute("value", value);
-               _this.triggerEvent(this, "change");
-               //target.removeAttribute("selected");
-               //console.log(target);
-               var children = this.children;
-               for(var i = 0; i < children.length; i++) {
-                 if(parseInt(value) == parseInt(children.item(i).getAttribute("value"))) {
-                   children.item(i).setAttribute("selected", "true");
-                   //break;
-                 } else {
-                   children.item(i).removeAttribute("selected");
-                 }
-               }
-               break;
-           }
-           target = target.parentNode;
-       }
-    });
+
+    select.onchange = function(e) {
+      var val = e.target.getAttribute("data-value");
+      select.setAttribute("data-value", val);
+      vl.innerHTML = e.target.getAttribute("data-name");
+      chg(val);
+      _this.hideDropdown();
+    }
+
     return select;
   }
 
-  createSelectOptionElement(nm, val, sel=false) {
-    var item = document.createElement("div");
-    item.setAttribute("class", "hlsjs-select-option");
-    item.setAttribute("value", val);
-    if(sel) {
-      item.setAttribute("selected", "true");
+  setSelectValue(select, name, value) {
+    select.setAttribute("data-value", value);
+    select.querySelector(".hlsjs-select-main > .hlsjs-select-option-selected").innerHTML = name;
+  }
+
+  createSelectOption(name, value, selected=false) {
+    var option = document.createElement("div");
+    option.setAttribute("class", "hlsjs-select-option");
+    option.setAttribute("data-value", value);
+    option.setAttribute("data-name", name);
+
+    if(selected) {
+      option.setAttribute("selected", "true");
     }
 
-    var name = document.createElement("span");
-    name.setAttribute("class", "hlsjs-select-option-name");
-    name.innerHTML = nm;
+    var nm = document.createElement("span")
+    nm.setAttribute("class", "hlsjs-select-option-name");
+    nm.innerHTML = name;
+    var sl = document.createElement("span")
+    sl.setAttribute("class", "hlsjs-select-option-selected");
 
-    var selected = document.createElement("span");
-    selected.setAttribute("class", "hlsjs-select-option-selected");
-    //value.innerHTML = val;
+    option.appendChild(nm);
+    option.appendChild(sl);
 
-    item.appendChild(name);
-    item.appendChild(selected);
+    option.onclick = function() {
+      var element = this;
+      var name = "change";
+      if(document.createEvent){
+          event = document.createEvent("HTMLEvents");
+          event.initEvent(name, true, true);
+          event.eventName = name;
+          element.dispatchEvent(event);
+      } else {
+          event = document.createEventObject();
+          event.eventName = name;
+          event.eventType = name;
+          element.fireEvent("on" + event.eventType, event);
+      }
+    }
 
-    return item;
+    return option;
+
   }
 
   triggerEvent(element, name) {

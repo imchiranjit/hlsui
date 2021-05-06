@@ -211,7 +211,7 @@
 
 .hlsjs-dropdown {
   position: absolute;
-  max-width: 180px;
+  /*max-width: 180px;*/
   max-height: 240px;
   background: #fff;
   bottom: 5px;
@@ -222,7 +222,7 @@
   border-radius: 10px;
   box-shadow: 0.1em 0.1em 0.3em rgb(0 0 0 / 20%);
   overflow: auto;
-  padding: .4em 0;
+  /*padding: .4em 0;*/
   transition: .3s;
 }
 .hlsjs-dropdown:not([shown]) {
@@ -291,6 +291,17 @@
   height: auto;
   width: auto;
   overflow: auto;
+  max-height: inherit;
+}
+
+.hlsjs-select-container {
+  max-height: inherit;
+  overflow: auto;
+}
+
+.hlsjs-select:not([show]) > .hlsjs-select-container,
+.hlsjs-select[show] > .hlsjs-select-main {
+  display: none;
 }
 
 .hlsjs-select-option[selected] {
