@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title></title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+		<script src="./hlsjs.js"></script>
+    <link rel="stylesheet" href="./hlsjs.css"/>
+    <style>
+        html, body {
+          margin: 0;
+        }
+    </style>
+  </head>
+  <body>
+
+    <div class="container">
+      <video id="video" autoplay controls poster=""></video>
+    </div>
+
+
+    <script>
+
+      if (Hls.isSupported()) {
+        var video = document.getElementById('video');
+        var hls = new HlsUI({debug:true});
+        // bind them together
+    		//hls.setConfig({live:true});
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MEDIA_ATTACHED, function () {
+          console.log('video and hls.js are now bound together !');
+    			//hls.loadSource('https://cph-p2p-msl.akamaized.net/hls/live/2000341/test/master.m3u8');
+    			//hls.loadSource("http://demo.unified-streaming.com/video/tears-of-steel/tears-of-steel.ism/.m3u8");
+          //hls.loadSource("https://storage.googleapis.com/shaka-demo-assets/angel-one-hls/hls.m3u8")
+    			hls.loadSource({
+            source: "https://storage.googleapis.com/shaka-demo-assets/angel-one-hls/hls.m3u8",
+            title: "Angle One",
+            //live: true,
+            qualityLabel: {
+              "482170": "144p",
+              "784019": "240p",
+              "1146764": "360p",
+              "1410993": "480p",
+              "1824731": "720p",
+            },
+            playbackRate: {
+              "0.5": "0.5x",
+              "1.0": "Normal",
+              "2.0": "Double"
+            }
+          });
+    			//hls.loadSource("http://cdn.theoplayer.com/video/elephants-dream/playlist.m3u8");
+          hls.on(Hls.Events.MANIFEST_PARSED, function (event, data) {
+    				console.log(data);
+    				console.log(hls);
+    				//console.log(hls.getVideoQualities());
+          });
+        });
+      }
+
+    </script>
+
+  </body>
+</html>
