@@ -391,10 +391,16 @@ class HlsUI extends Hls {
   }
 
   destroyUI() {
-    this.media.parentNode.parentNode.insertBefore(this.media.parentNode, this.media);
+    this.controls.videoContainer.parentElement.insertBefore(this.media, this.controls.videoContainer);
     this.media.ontimeupdate = null;
     this.media.ondurationchange = null;
+    this.media.onwaiting = null;
+    this.media.onstalled = null;
+    this.media.onplaying = null;
+    this.media.onpause = null;
     this.media.id = this.controls.videoContainer.id;
+    this.removeClass(this.media, "hlsjs-video");
+    this.media.setAttribute("controls", "true");
     this.controls.videoContainer.remove();
   }
 
@@ -425,6 +431,7 @@ class HlsUI extends Hls {
           default:
             // cannot recover
             _this.destroy();
+            _this.destroyUI();
             break;
         }
       }
@@ -473,7 +480,16 @@ class HlsUI extends Hls {
       _this.media.ontimeupdate = (event) => {
         _this.updateSeekBar();
         _this.updateBufferedProgress();
-        _this.hideLoader();
+        if(_this.isPlaying()) {
+          _this.hideLoader();
+        }
+      };
+
+      _this.media.onwaiting = (event) => {
+        _this.showLoader();
+      };
+      _this.media.onstalled = (event) => {
+        _this.showLoader();
       };
 
       _this.controls.seek.oninput = function() {
@@ -486,7 +502,7 @@ class HlsUI extends Hls {
         //_this.updateSeek();
         _this.hideDropdown();
         _this.hideControls();
-        _this.showLoader();
+        //_this.showLoader();
       }
 
       _this.media.ondurationchange = (event) => {
@@ -515,7 +531,7 @@ class HlsUI extends Hls {
       window.addEventListener("offline", function () {
         //console.log("offline");
         //_this.showLoader();
-        //_this.stopLoad();
+        _this.stopLoad();
       }, false);
       window.addEventListener("online", function () {
         //console.log("online");
@@ -718,6 +734,11 @@ class HlsUI extends Hls {
         break;
       }
     }
+  }
+
+  isPlaying() {
+    var media = this.media;
+    return media.currentTime > 0 && !this.paused && !media.ended && media.readyState > 2;
   }
 
   updateSliderBackground(el) {
