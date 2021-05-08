@@ -282,6 +282,7 @@
   overflow: auto;
   /*padding: .4em 0;*/
   transition: .3s;
+  z-index: 2;
 }
 
 .hlsjs-dropdown:not([shown]) {
