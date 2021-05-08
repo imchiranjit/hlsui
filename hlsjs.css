@@ -5,7 +5,7 @@
   font-style: normal;
   font-weight: 400;
   src: url(https://fonts.gstatic.com/s/materialiconsround/v49/LDItaoyNOAY6Uewc665JcIzCKsKc_M9flwmP.woff2) format('woff2'),
-       url(https://fonts.gstatic.com/s/materialiconsround/v50/LDItaoyNOAY6Uewc665JcIzCKsKc_M9flwmJ.woff) format('woff');
+    url(https://fonts.gstatic.com/s/materialiconsround/v50/LDItaoyNOAY6Uewc665JcIzCKsKc_M9flwmJ.woff) format('woff');
 }
 
 .hlsjs-big-play-btn, .hlsjs-ctrl-btn {
@@ -25,21 +25,52 @@
 }
 
 /*=======================================*/
-
 :root {
   --value: 50%;
+}
+
+.hlsjs-container:not(.hlsjs-mob),
+.hlsjs-container:not(.hlsjs-mob) * {
+  box-sizing: border-box;
+  -webkit-touch-callout: none;
+  /* iOS Safari */
+  -webkit-user-select: none;
+  /* Safari */
+  -khtml-user-select: none;
+  /* Konqueror HTML */
+  -moz-user-select: none;
+  /* Firefox */
+  -ms-user-select: none;
+  /* Internet Explorer/Edge */
+  user-select: none;
+  /* Non-prefixed version, currently
+                                  supported by Chrome and Opera */
+}
+
+.hlsjs-container:not(.hlsjs-mob)::-webkit-scrollbar,
+.hlsjs-container:not(.hlsjs-mob) *::-webkit-scrollbar {
+  width: .3em;
+  height: .5em;
+  background-color: #f6f6f6;
+  /* or add it to the track */
+}
+
+/* Add a thumb */
+.hlsjs-container:not(.hlsjs-mob)::-webkit-scrollbar-thumb,
+.hlsjs-container:not(.hlsjs-mob) *::-webkit-scrollbar-thumb {
+  background: #aaa;
+}
+
+.hlsjs-container:not(.hlsjs-mob),
+.hlsjs-container:not(.hlsjs-mob) * {
+  scrollbar-width: .3em;
 }
 
 .hlsjs-container {
   position: relative;
 }
 
-.hlsjs-container,
-.hlsjs-container * {
-  box-sizing: border-box;
-}
-
-.hlsjs-container > .hlsjs-controls {
+.hlsjs-container>.hlsjs-controls {
   position: absolute;
   top: 0;
   display: flex;
@@ -49,28 +80,32 @@
   height: 100%;
   overflow: hidden;
 }
+
 .hlsjs-controls:not([shown]) {
-    cursor: none;
+  cursor: none;
 }
+
 .hlsjs-video {
   width: 100%;
   height: 100%;
 }
-.hlsjs-controls > *{
+
+.hlsjs-controls>* {
   opacity: 0;
   transition: .2s;
   z-index: 0;
 }
-.hlsjs-controls[shown] > *{
+
+.hlsjs-controls[shown]>* {
   opacity: 1;
   z-index: 1;
 }
 
-.hlsjs-controls[shown] > .hlsjs-backface {
+.hlsjs-controls[shown]>.hlsjs-backface {
   z-index: 0;
 }
 
-.hlsjs-controls > .hlsjs-backface {
+.hlsjs-controls>.hlsjs-backface {
   width: 100%;
   height: 100%;
   position: absolute;
@@ -85,9 +120,11 @@
   width: 100%;
   padding: .4em;
 }
+
 .hlsjs-topbar {
   display: inline-flex;
 }
+
 .hlsjs-toolbar {
   display: flex;
   flex-direction: column;
@@ -105,6 +142,7 @@
   white-space: nowrap;
   width: 100%;
 }
+
 .hlsjs-live-tag {
   font-size: .6em;
   background: #00b500;
@@ -116,11 +154,12 @@
   outline: none;
   cursor: pointer;
 }
+
 .hlsjs-live-tag:not([live]) {
   background: #b50000;
 }
 
-.hlsjs-controls > .hlsjs-big-play-btn {
+.hlsjs-controls>.hlsjs-big-play-btn {
   position: absolute;
   margin: auto;
   top: 50%;
@@ -151,28 +190,41 @@
   position: absolute;
   transition: .1s;
 }
+
 .hlsjs-loader[shown] {
   opacity: 1 !important;
 }
+
 .loader {
   width: 100%;
   height: 100%;
   border: 4px solid #f3f3f3;
   border-radius: 50%;
   border-top: 4px solid #3498db;
-  -webkit-animation: spin 1.5s linear infinite; /* Safari */
+  -webkit-animation: spin 1.5s linear infinite;
+  /* Safari */
   animation: spin 1.5s linear infinite;
 }
 
 /* Safari */
 @-webkit-keyframes spin {
-  0% { -webkit-transform: rotate(0deg); }
-  100% { -webkit-transform: rotate(360deg); }
+  0% {
+    -webkit-transform: rotate(0deg);
+  }
+
+  100% {
+    -webkit-transform: rotate(360deg);
+  }
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .hlsjs-toolbar-controls {
@@ -202,9 +254,11 @@
   color: #fff;
   cursor: pointer;
 }
+
 .hlsjs-ctrl-btn.btn-lt {
   float: left;
 }
+
 .hlsjs-ctrl-btn.btn-rt {
   float: right;
 }
@@ -225,6 +279,7 @@
   /*padding: .4em 0;*/
   transition: .3s;
 }
+
 .hlsjs-dropdown:not([shown]) {
   right: -280px;
 }
@@ -239,12 +294,14 @@
   bottom: 0;
   right: 0;
 }
+
 .hlsjs-container.hlsjs-mob .hlsjs-dropdown:not([shown]) {
   bottom: -100%;
 }
-.hlsjs-container.hlsjs-mob .hlsjs-controls[dropdown] > .hlsjs-backface {
-    position: fixed;
-    z-index: 1;
+
+.hlsjs-container.hlsjs-mob .hlsjs-controls[dropdown]>.hlsjs-backface {
+  position: fixed;
+  z-index: 1;
 }
 
 .hlsjs-dropdown-item, .hlsjs-select-option {
@@ -299,19 +356,21 @@
   overflow: auto;
 }
 
-.hlsjs-select:not([show]) > .hlsjs-select-container,
-.hlsjs-select[show] > .hlsjs-select-main {
+.hlsjs-select:not([show])>.hlsjs-select-container,
+.hlsjs-select[show]>.hlsjs-select-main {
   display: none;
 }
 
 .hlsjs-select-option[selected] {
   background: #c6c6c6;
 }
-.hlsjs-select-option[selected] > .hlsjs-select-option-name {
+
+.hlsjs-select-option[selected]>.hlsjs-select-option-name {
   color: #000;
   font-weight: 800;
 }
-.hlsjs-select-option[selected] > .hlsjs-select-option-selected {
+
+.hlsjs-select-option[selected]>.hlsjs-select-option-selected {
   width: 10px;
   height: 10px;
   background: #00b500;
@@ -328,7 +387,6 @@
 .hlsjs-controls.hlsjs-live .hlsjs-speed {
   display: none;
 }
-
 
 /////////////////
 .hlsjs-slider-container {
@@ -372,13 +430,16 @@
 .hlsjs-slider::-moz-range-progress {
   background-color: #2196f3;
 }
+
 .hlsjs-slider::-moz-range-track {
   background-color: #ccc;
 }
+
 /* IE*/
 .hlsjs-slider::-ms-fill-lower {
   background-color: #2196f3;
 }
+
 .hlsjs-slider::-ms-fill-upper {
   background-color: #ccc;
 }
@@ -386,6 +447,7 @@
 .hlsjs-volume-container {
   margin: 0 .2em;
 }
+
 .hlsjs-volume-container:hover {
   background: rgba(0, 0, 0, 0.5);
   border-radius: 20px;
@@ -419,13 +481,6 @@
   border-radius: 0;
 }
 
-
-
-
-
-
-
-
 .hlsjs-time-container {
   color: #fff;
   height: 100%;
@@ -438,7 +493,6 @@
 .hlsjs-duration {
   font-family: sans-serif;
 }
-
 
 .hlsjs-seek-container {
   vertical-align: middle;
@@ -466,21 +520,22 @@
   z-index: 0;
 }
 
-.hlsjs-progress::-webkit-progress-value  {
-    background: #eee;
-    border-radius: 5px;
+.hlsjs-progress::-webkit-progress-value {
+  background: #eee;
+  border-radius: 5px;
 }
 
-.hlsjs-progress::-moz-progress-value  {
-    background: #eee;
-    border-radius: 5px;
+.hlsjs-progress::-moz-progress-value {
+  background: #eee;
+  border-radius: 5px;
 }
 
-.hlsjs-progress::-webkit-progress-bar  {
-    background: #bbb;
-    border-radius: 5px;
+.hlsjs-progress::-webkit-progress-bar {
+  background: #bbb;
+  border-radius: 5px;
 }
+
 .hlsjs-progress::-moz-progress-bar {
-    background: #bbb;
-    border-radius: 5px;
+  background: #bbb;
+  border-radius: 5px;
 }
