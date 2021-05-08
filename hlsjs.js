@@ -598,6 +598,10 @@ class HlsUI extends Hls {
   getCurrentAudioTrack() {
     return this.getAudioTrack(this.audioTrack);
   }
+
+  hasAudioTrack() {
+    return this.getAudioTracks().length > 0;
+  }
   //
 
   //Subtitles methods
@@ -723,8 +727,10 @@ class HlsUI extends Hls {
 
   notLive() {
     if(!this.isLive()) {
+      this.removeClass(this.controls.dropdownItem.speed, "hide");
       return;
     }
+    this.addClass(this.controls.dropdownItem.speed, "hide");
     this.liveTagActive();
   }
 
@@ -929,6 +935,12 @@ class HlsUI extends Hls {
 
     var currentAudio = this.getCurrentAudioTrack();
     this.setSelectValue(this.controls.dropdownItem.audioTrack, currentAudio.name, currentAudio.level);
+
+    if(this.hasAudioTrack()) {
+      this.removeClass(this.controls.dropdownItem.audioTrack, "hide");
+    } else {
+      this.addClass(this.controls.dropdownItem.audioTrack, "hide");
+    }
 
     var currentSubtitle = this.getCurrentSubtitle();
     this.setSelectValue(this.controls.dropdownItem.caption, currentSubtitle.name, currentSubtitle.level);
