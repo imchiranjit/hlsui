@@ -29,8 +29,9 @@
   --value: 50%;
 }
 
-.hlsjs-container:not(.hlsjs-mob),
-.hlsjs-container:not(.hlsjs-mob) * {
+.hlsjs-container,
+.hlsjs-container * {
+  box-sizing: border-box;
   -webkit-touch-callout: none;
   /* iOS Safari */
   -webkit-user-select: none;
@@ -63,11 +64,6 @@
 .hlsjs-container:not(.hlsjs-mob),
 .hlsjs-container:not(.hlsjs-mob) * {
   scrollbar-width: .3em;
-}
-
-.hlsjs-container,
-.hlsjs-container * {
-  box-sizing: border-box;
 }
 
 .hlsjs-container {
