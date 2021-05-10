@@ -2,7 +2,7 @@
 
 ## Usage
 
-```
+```javascript
 if (Hls.isSupported()) {
     var video = document.getElementById('video');
     var hls = new HlsUI({
