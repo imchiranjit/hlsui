@@ -22,7 +22,7 @@ class HlsUI extends Hls {
     dropdownItem: {
       resolution: null,
       speed: null,
-      caption: null,
+      subtitle: null,
       audioTrack: null,
     },
     controlsContainer: null,
@@ -84,6 +84,12 @@ class HlsUI extends Hls {
       var el = this.playerConfig.playbackRate;
       Object.keys(el).forEach((item, i) => {
         _this.CONSTANTS.speeds.push({name: el[item], value: parseFloat(item)});
+      });
+    }
+    if(this.playerConfig.hasOwnProperty("subtitle")) {
+      var el = this.playerConfig.subtitle;
+      el.forEach((item, i) => {
+        _this.addSubtitle(item.url, item.lang);
       });
     }
   }
@@ -200,7 +206,7 @@ class HlsUI extends Hls {
     }, function(v) {
       _this.changeSpeedSelect(v);
     });
-    var videoCaption = this.createSelect("Caption", "None", function(el) {
+    var videoSubtitle = this.createSelect("Subtitle", "None", function(el) {
       _this.initSubtitleSelect(el);
     }, function(v) {
       _this.changeSubtitleSelect(v);
@@ -213,7 +219,7 @@ class HlsUI extends Hls {
 
     videoDropdown.appendChild(videoResolution);
     videoDropdown.appendChild(videoSpeed);
-    videoDropdown.appendChild(videoCaption);
+    videoDropdown.appendChild(videoSubtitle);
     videoDropdown.appendChild(videoAudio);
 
     var videoToolbarControlsLeft = document.createElement("div");
@@ -307,7 +313,7 @@ class HlsUI extends Hls {
 
     this.controls.dropdownItem.resolution = videoResolution;
     this.controls.dropdownItem.speed = videoSpeed;
-    this.controls.dropdownItem.caption = videoCaption;
+    this.controls.dropdownItem.subtitle = videoSubtitle;
     this.controls.dropdownItem.audioTrack = videoAudio;
 
     this.bindControls();
@@ -964,7 +970,7 @@ class HlsUI extends Hls {
     }
 
     var currentSubtitle = this.getCurrentSubtitle();
-    this.setSelectValue(this.controls.dropdownItem.caption, currentSubtitle.name, currentSubtitle.level);
+    this.setSelectValue(this.controls.dropdownItem.subtitle, currentSubtitle.name, currentSubtitle.level);
   }
 
   isDropdownShown() {
@@ -1171,6 +1177,25 @@ class HlsUI extends Hls {
       return isoLangs[langcode];
     }
     return {name: "UNKNOWN", nativeName: "UNKNOWN"}
+  }
+
+  srtParse(t){var r=function(t){for(var r=t.split(","),e=r[0].split(":"),i=0,d=1;e.length>0;)i+=d*parseInt(e.pop(),10),d*=60;return parseFloat(i+"."+r[1])};(t=(t=t.replace(/\r/g,"")).split(/(\d+)\n(\d{2}:\d{2}:\d{2},\d{3}) --> (\d{2}:\d{2}:\d{2},\d{3})/g)).shift();for(var e=[],i=0;i<t.length;i+=4)e.push({id:t[i].trim(),startTime:r(t[i+1].trim()),endTime:r(t[i+2].trim()),text:t[i+3].trim()});return e}
+
+  addSubtitle(url, lang) {
+    var _this = this;
+    var xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+           var arr = _this.srtParse(xhr.responseText);
+           var len = arr.length;
+           var sub = _this.media.addTextTrack("subtitles", "hlsjs_"+lang, lang);
+           for(var i = 0; i < len; i++) {
+             sub.addCue(new VTTCue(arr[i].startTime, arr[i].endTime, arr[i].text));
+           }
+        }
+    };
+    xhr.open("GET", url);
+    xhr.send();
   }
 
 
