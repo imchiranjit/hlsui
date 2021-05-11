@@ -29,10 +29,18 @@ if (Hls.isSupported()) {
                 "1.0": "Normal",
                 "2.0": "Double"
             },
-            subtitle: [{
-                url: "./sub.srt",
-                lang: "en"
-            }]
+            subtitle:[
+              {
+                url: "../sub/gk-en.srt",
+                lang: "en",
+                type: "srt" //srt | vvt
+              },
+              {
+                url: "../sub/gk-bn.vtt",
+                lang: "bn",
+                type: "vtt" //srt | vtt
+              }
+            ]
         });
     });
 }
