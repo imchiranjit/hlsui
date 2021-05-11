@@ -50,3 +50,4 @@ Else Same as hlsjs Documentation https://github.com/video-dev/hls.js/blob/master
 
 # Credits
 Thanks https://github.com/bazh/subtitles-parser for srt subtitle parser
+Thanks https://github.com/mozilla/popcorn-js/blob/master/parsers/parserVTT/popcorn.parserVTT.js for vtt subtitle parser
