@@ -35,7 +35,7 @@
           //hls.loadSource("https://storage.googleapis.com/shaka-demo-assets/angel-one-hls/hls.m3u8")
     			hls.loadSource({
             source: "https://storage.googleapis.com/shaka-demo-assets/angel-one-hls/hls.m3u8",
-            title: "Angle One",
+            title: "Angel One",
             //live: true,
             qualityLabel: {
               "482170": "144p",
@@ -51,8 +51,14 @@
             },
             /*subtitle:[
               {
-                url: "../sub.srt",
-                lang: "en"
+                url: "../sub/gk-en.srt",
+                lang: "en",
+                type: "srt" //srt | vvt
+              },
+              {
+                url: "../sub/gk-bn.vtt",
+                lang: "bn",
+                type: "vtt" //srt | vtt
               }
             ]*/
           });

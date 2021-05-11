@@ -89,7 +89,7 @@ class HlsUI extends Hls {
     if(this.playerConfig.hasOwnProperty("subtitle")) {
       var el = this.playerConfig.subtitle;
       el.forEach((item, i) => {
-        _this.addSubtitle(item.url, item.lang);
+        _this.addSubtitle(item.url, item.lang, item.type);
       });
     }
   }
@@ -1179,19 +1179,25 @@ class HlsUI extends Hls {
     return {name: "UNKNOWN", nativeName: "UNKNOWN"}
   }
 
-  srtParse(t){var r=function(t){for(var r=t.split(","),e=r[0].split(":"),i=0,d=1;e.length>0;)i+=d*parseInt(e.pop(),10),d*=60;return parseFloat(i+"."+r[1])};(t=(t=t.replace(/\r/g,"")).split(/(\d+)\n(\d{2}:\d{2}:\d{2},\d{3}) --> (\d{2}:\d{2}:\d{2},\d{3})/g)).shift();for(var e=[],i=0;i<t.length;i+=4)e.push({id:t[i].trim(),startTime:r(t[i+1].trim()),endTime:r(t[i+2].trim()),text:t[i+3].trim()});return e}
+  getSubtitleParser() {
+    return {toSeconds:function(t){var r,e=t.split(":"),n=t.length;if(12!==n&&9!==n)throw"Bad cue";n=e.length-1;try{r=60*parseInt(e[n-1],10)+parseFloat(e[n],10),2===n&&(r+=3600*parseInt(e[0],10))}catch(t){throw"Bad cue"}return r},srtParse:function(t){(t=(t=t.replace(/\r/g,"")).split(/(\d+)\n(\d{2}:\d{2}:\d{2},\d{3}) --> (\d{2}:\d{2}:\d{2},\d{3})/g)).shift();for(var r=[],e=0;e<t.length;e+=4)r.push({id:t[e].trim(),start:this.toSeconds(t[e+1].replace(",",".").trim()),end:this.toSeconds(t[e+2].replace(",",".").trim()),text:t[e+3].trim()});return r},vttParse:function(t){var r,e,n,s,i=this,o=function(t){var r,e={};if(!t||-1===t.indexOf("--\x3e"))throw"Bad cue";if((r=t.replace(/-->/," --\x3e ").split(/[\t ]+/)).length<2)throw"Bad cue";return e.start=i.toSeconds(r[0]),e.end=i.toSeconds(r[2]),e},a=function(t,r,e){for(;e<r&&!t[e];)e++;return e},c=function(t,r,e){for(;e<r&&t[e];)e++;return e},d=[],u=0,h=1;if(0===(r=(e=t.split(/(?:\r\n|\r|\n)/gm)).length)||"WEBVTT"!==e[0])return retObj;for(u++;u<r;){n=[];try{for(u=a(e,r,u),s=o(e[u++]);u<r&&e[u];)n.push(e[u++]);s.id=""+h,s.text=n.join("<br />"),d.push(s),h++}catch(t){u=c(e,r,u)}}return d},parse:function(t,r){return"srt"==(r=r.trim().toLowerCase())?this.srtParse(t):"vtt"==r?this.vttParse(t):[]}};
+  }
 
-  addSubtitle(url, lang) {
+  addSubtitle(url, lang, tp) {
     var _this = this;
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function() {
         if (this.readyState == 4 && this.status == 200) {
-           var arr = _this.srtParse(xhr.responseText);
+          try {
+           var arr = _this.getSubtitleParser().parse(xhr.responseText, tp);
            var len = arr.length;
            var sub = _this.media.addTextTrack("subtitles", "hlsjs_"+lang, lang);
            for(var i = 0; i < len; i++) {
-             sub.addCue(new VTTCue(arr[i].startTime, arr[i].endTime, arr[i].text));
+             sub.addCue(new VTTCue(arr[i].start, arr[i].end, arr[i].text));
            }
+         } catch(e) {
+           console.error(e);
+         }
         }
     };
     xhr.open("GET", url);
