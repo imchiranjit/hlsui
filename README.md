@@ -33,11 +33,13 @@ if (Hls.isSupported()) {
               {
                 url: "../sub/gk-en.srt",
                 lang: "en",
+                label: "",
                 type: "srt" //srt | vvt
               },
               {
-                url: "../sub/gk-bn.vtt",
-                lang: "bn",
+                url: "../sub/gk-hi.vtt",
+                lang: "",
+                label: "Subtitle", //lang must be ""
                 type: "vtt" //srt | vtt
               }
             ]
@@ -49,5 +51,5 @@ if (Hls.isSupported()) {
 Else Same as hlsjs Documentation https://github.com/video-dev/hls.js/blob/master/docs/API.md
 
 # Credits
-Thanks https://github.com/bazh/subtitles-parser for srt subtitle parser
+Thanks https://github.com/bazh/subtitles-parser for srt subtitle parser  
 Thanks https://github.com/mozilla/popcorn-js/blob/master/parsers/parserVTT/popcorn.parserVTT.js for vtt subtitle parser
