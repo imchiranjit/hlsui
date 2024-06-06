@@ -53,10 +53,7 @@
         });
       }
     } else {
-      url = prompt("Enter the URL of the video");
-      if (url) {
-        window.location.href = `./demo.html?url=${encodeURIComponent(url)}`;
-      }
+      window.location.href = `./demo.html?url=${encodeURIComponent(prompt("Enter the URL of the video"))}`;
     }
 
   </script>
