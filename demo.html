@@ -25,15 +25,17 @@
 
   <script>
 
-    if (Hls.isSupported()) {
-      var video = document.getElementById('video');
-      var hls = new HlsUI({ debug: false });
-      hls.attachMedia(video);
-      hls.on(Hls.Events.MEDIA_ATTACHED, function () {
-        console.log('video and hls.js are now bound together !');
-        const urlParams = new URLSearchParams(window.location.search);
-        const url = urlParams.get('url');
-        if (url) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const url = urlParams.get('url');
+
+    if (url) {
+      if (Hls.isSupported()) {
+        var video = document.getElementById('video');
+        var hls = new HlsUI({ debug: false });
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MEDIA_ATTACHED, function () {
+          console.log('video and hls.js are now bound together !');
+
           hls.loadSource({
             source: url,
             title: urlParams.get('title') || "Video",
@@ -43,29 +45,18 @@
               "2.0": "Double"
             },
           });
-        } else {
-          hls.loadSource({
-            source: "https://storage.googleapis.com/shaka-demo-assets/angel-one-hls/hls.m3u8",
-            title: "Angel One",
-            qualityLabel: {
-              "482170": "144p",
-              "784019": "240p",
-              "1146764": "360p",
-              "1410993": "480p",
-              "1824731": "720p",
-            },
-            playbackRate: {
-              "0.5": "0.5x",
-              "1.0": "Normal",
-              "2.0": "Double"
-            },
+
+          hls.on(Hls.Events.MANIFEST_PARSED, function (event, data) {
+            console.log(data);
+            console.log(hls);
           });
-        }
-        hls.on(Hls.Events.MANIFEST_PARSED, function (event, data) {
-          console.log(data);
-          console.log(hls);
         });
-      });
+      }
+    } else {
+      url = prompt("Enter the URL of the video");
+      if (url) {
+        window.location.href = `./demo.html?url=${encodeURIComponent(url)}`;
+      }
     }
 
   </script>
